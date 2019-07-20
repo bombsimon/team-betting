@@ -7,6 +7,7 @@ SELECT 'up SQL query';
 -- Contest 2020".
 CREATE TABLE competition (
     id          INT PRIMARY KEY AUTO_INCREMENT,
+    image       VARCHAR(100),
     name        VARCHAR(100) NOT NULL,
     description VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
@@ -53,7 +54,7 @@ CREATE TABLE bet (
     id                          INT PRIMARY KEY AUTO_INCREMENT,
     id_better                   INT NOT NULL,
     id_competition_competitor   INT NOT NULL,
-    placeing                    INT,
+    placing                     INT,
     note                        VARCHAR(255),
 
     FOREIGN KEY (id_better) REFERENCES better(id),
