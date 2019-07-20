@@ -22,7 +22,7 @@ func main() {
 	r.POST("/better", mockFunc)
 
 	r.GET("/test", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "/home/simon/git/team-betting/cmd/betting/index.html")
+		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")
 	})
 
 	r.GET("/ws", func(c *gin.Context) {
