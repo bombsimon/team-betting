@@ -109,17 +109,55 @@ func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (*pkg.Bette
 
 // AddBet will add a bet for a better to a competitor in a competition.
 func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
-	_, err := s.DB.Gq.From(pkg.BetTable).
-		Insert(
+	competition, err := s.GetCompetition(ctx, bet.CompetitionID)
+	if err != nil {
+		return err
+	}
+
+	if err := bet.Validate(competition.MinScore, competition.MaxScore); err != nil {
+		return errors.Wrap(err, "bad request")
+	}
+
+	var competitionCompetitorID int
+	found, err := s.DB.Gq.From(pkg.CompetitionCompetitorTable).
+		Select("id").
+		Where(
+			goqu.Ex{
+				"id_competition": bet.CompetitionID,
+				"id_competitor":  bet.CompetitorID,
+			},
+		).
+		ScanVal(&competitionCompetitorID)
+
+	if err != nil {
+		return errors.Wrap(err, "could not get competition/competitor ID")
+	}
+
+	if !found {
+		return errors.Wrap(pkg.ErrBadRequest, "invalid competition/competitor combination")
+	}
+
+	_, err = s.DB.Gq.From(pkg.BetTable).
+		InsertConflict(
+			goqu.DoUpdate("placing, score, note", goqu.Record{
+				"placing": bet.Placing,
+				"score":   bet.Score,
+				"note":    bet.Note,
+			}),
 			goqu.Record{
 				"id_better":                 bet.BetterID,
-				"id_competition_competitor": bet.CompetitionCompetitorID,
+				"id_competition_competitor": competitionCompetitorID,
 				"placing":                   bet.Placing,
+				"score":                     bet.Score,
 				"note":                      bet.Note,
 			},
 		).Exec()
 
 	if err != nil {
+		if database.ErrType(err) == database.ErrForeignKeyConstraint {
+			return errors.Wrap(pkg.ErrBadRequest, "invalid better/competitor/competition combination")
+		}
+
 		return errors.Wrap(err, "could not create bet")
 	}
 
@@ -270,34 +308,45 @@ func (s *Service) GetCompetitorsForCompetition(ctx context.Context, competitionI
 
 func (s *Service) GetBetsForCompetition(ctx context.Context, competitionID int) ([]*pkg.Bet, error) {
 	var (
-		betRows []struct {
-			*pkg.Bet
-			*pkg.CompetitionCompetitor
-		}
 		bets               []*pkg.Bet
-		uniqueBetters      map[int]struct{}
-		uniqueCompetitions map[int]struct{}
-		uniqueCompetitors  map[int]struct{}
-		idToBetter         map[int]*pkg.Better
-		idToCompetition    map[int]*pkg.Competition
-		idToCompetitor     map[int]*pkg.Competitor
+		uniqueBetters      = map[int]struct{}{}
+		uniqueCompetitions = map[int]struct{}{}
+		uniqueCompetitors  = map[int]struct{}{}
+		idToBetter         = map[int]*pkg.Better{}
+		idToCompetition    = map[int]*pkg.Competition{}
+		idToCompetitor     = map[int]*pkg.Competitor{}
 	)
 
 	err := s.DB.Gq.From(pkg.BetTable).
+		Select(
+			goqu.I("bet.id"),
+			goqu.I("bet.created_at"),
+			goqu.I("bet.updated_at"),
+			goqu.I("bet.id_better"),
+			goqu.I("competition_competitor.id_competition"),
+			goqu.I("competition_competitor.id_competitor"),
+			goqu.I("bet.score"),
+			goqu.I("bet.placing"),
+			goqu.I("bet.note"),
+		).
 		Join(
 			goqu.I(pkg.CompetitionCompetitorTable),
-			goqu.On(goqu.Ex{"bet.id_competition_competitor": "competition_competitor.id"}),
+			goqu.On(goqu.Ex{"bet.id_competition_competitor": goqu.I("competition_competitor.id")}),
 		).
 		Where(
 			goqu.Ex{"competition_competitor.id_competition": competitionID},
 		).
-		ScanStructs(&betRows)
+		ScanStructs(&bets)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get bets")
 	}
 
-	for _, bet := range betRows {
+	if len(bets) < 1 {
+		return bets, nil
+	}
+
+	for _, bet := range bets {
 		uniqueBetters[bet.BetterID] = struct{}{}
 		uniqueCompetitions[bet.CompetitionID] = struct{}{}
 		uniqueCompetitors[bet.CompetitorID] = struct{}{}
@@ -340,13 +389,10 @@ func (s *Service) GetBetsForCompetition(ctx context.Context, competitionID int) 
 		idToCompetitor[competitor.ID] = competitor
 	}
 
-	for _, b := range betRows {
-		bet := b.Bet
-		bet.Better = idToBetter[b.BetterID]
-		bet.Competition = idToCompetition[b.CompetitionID]
-		bet.Competitor = idToCompetitor[b.CompetitorID]
-
-		bets = append(bets, bet)
+	for i := range bets {
+		bets[i].Better = idToBetter[bets[i].BetterID]
+		bets[i].Competition = idToCompetition[bets[i].CompetitionID]
+		bets[i].Competitor = idToCompetitor[bets[i].CompetitorID]
 	}
 
 	return bets, nil

@@ -252,3 +252,96 @@ func TestService_AddBetter(t *testing.T) {
 		})
 	}
 }
+
+func TestService_AddBet(t *testing.T) {
+	var (
+		s             = setupService(t)
+		competitorIDs []int
+		betterIDs     []int
+	)
+
+	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
+		Name: "Unittest competition",
+	})
+
+	require.NoError(t, err)
+
+	for i := range make([]int, 3) {
+		c, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
+			Name: fmt.Sprintf("Unittest competitor %d", i+1)},
+			&competition.ID,
+		)
+
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		competitorIDs = append(competitorIDs, c.ID)
+
+		b, err := s.AddBetter(context.Background(), &pkg.Better{
+			Name:  fmt.Sprintf("Unittest better %d", i+1),
+			Email: fmt.Sprintf("user%d@test.se", i+1),
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		betterIDs = append(betterIDs, b.ID)
+	}
+
+	cases := []struct {
+		description string
+		bet         *pkg.Bet
+		errContains string
+	}{
+		{
+			description: "no competition found",
+			bet:         &pkg.Bet{},
+			errContains: "no competition found",
+		},
+		{
+			description: "all missing data",
+			bet: &pkg.Bet{
+				CompetitionID: competition.ID,
+			},
+			errContains: "bad request: id_better: cannot be blank; id_competitor: cannot be blank.",
+		},
+		{
+			description: "successful bet",
+			bet: &pkg.Bet{
+				BetterID:      betterIDs[0],
+				CompetitionID: competition.ID,
+				CompetitorID:  competitorIDs[0],
+				Placing:       null.IntFrom(3),
+				Score:         null.IntFrom(8),
+				Note:          null.StringFrom("Lots of lots and stuff"),
+			},
+		},
+		{
+			description: "successful update of exiting bet",
+			bet: &pkg.Bet{
+				BetterID:      betterIDs[0],
+				CompetitionID: competition.ID,
+				CompetitorID:  competitorIDs[0],
+				Placing:       null.IntFrom(5),
+				Note:          null.StringFrom("Some other stuff"),
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			ctx := context.Background()
+
+			err := s.AddBet(ctx, tc.bet)
+
+			if tc.errContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errContains)
+
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}

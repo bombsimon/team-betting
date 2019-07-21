@@ -24,7 +24,6 @@ var (
 // CompetitionMetrics represents metrics that may be calculated for a
 // competition.
 type CompetitionMetrics struct {
-	Competition          *Competition
 	HighestAverageBetter *Better
 	LowestAverageBetter  *Better
 	MostTopScores        *Better
@@ -38,16 +37,17 @@ type CompetitionMetrics struct {
 
 // Competition represents one competition, e.g. Eurovision Song Contest 2022.
 type Competition struct {
-	ID          int           `db:"id"          json:"id"`
-	CreatedAt   time.Time     `db:"created_at"  json:"created_at"`
-	UpdatedAt   null.Time     `db:"updated_at"  json:"updated_at"`
-	Name        string        `db:"name"        json:"name"`
-	Description null.String   `db:"description" json:"description"`
-	Image       null.String   `db:"image"       json:"image"`
-	MinScore    int           `db:"min_score"   json:"min_score"`
-	MaxScore    int           `db:"max_score"   json:"max_score"`
-	Locked      bool          `db:"locked"      json:"locked"`
-	Competitors []*Competitor `db:"-"           json:"competitors"`
+	ID          int                 `db:"id"          json:"id"`
+	CreatedAt   time.Time           `db:"created_at"  json:"created_at"`
+	UpdatedAt   null.Time           `db:"updated_at"  json:"updated_at"`
+	Name        string              `db:"name"        json:"name"`
+	Description null.String         `db:"description" json:"description"`
+	Image       null.String         `db:"image"       json:"image"`
+	MinScore    int                 `db:"min_score"   json:"min_score"`
+	MaxScore    int                 `db:"max_score"   json:"max_score"`
+	Locked      bool                `db:"locked"      json:"locked"`
+	Competitors []*Competitor       `db:"-"           json:"competitors"`
+	Metrics     *CompetitionMetrics `db:"-"           json:"metrics"`
 }
 
 // Competitor represents a team or player competing in a competition. A
@@ -60,14 +60,6 @@ type Competitor struct {
 	Description null.String  `db:"description"    json:"description"`
 	Image       null.String  `db:"image"          json:"image"`
 	Competition *Competition `db:"-"              json:"competition"`
-}
-
-// CompetitionCompetitor represents the linking between a competition and a
-// competitor.
-type CompetitionCompetitor struct {
-	ID            int `db:"id"`
-	CompetitionID int `db:"id_competition"`
-	CompetitorID  int `db:"id_competitor"`
 }
 
 // Better is someone who can make a Bet on a Competitor.
@@ -86,9 +78,11 @@ type Bet struct {
 	ID                      int          `db:"id"                        json:"id"`
 	CreatedAt               time.Time    `db:"created_at"                json:"created_at"`
 	UpdatedAt               null.Time    `db:"updated_at"                json:"updated_at"`
-	BetterID                int          `db:"id_better"                 json:"-"`
+	BetterID                int          `db:"id_better"                 json:"id_better"`
+	CompetitionID           int          `db:"id_competition"            json:"id_competition"`
+	CompetitorID            int          `db:"id_competitor"             json:"id_competitor"`
 	CompetitionCompetitorID int          `db:"id_competition_competitor" json:"-"`
-	Rating                  null.Int     `db:"rating"                    json:"rating"`
+	Score                   null.Int     `db:"score"                     json:"score"`
 	Placing                 null.Int     `db:"placing"                   json:"placing"`
 	Note                    null.String  `db:"note"                      json:"note"`
 	Better                  *Better      `db:"-"                         json:"better"`

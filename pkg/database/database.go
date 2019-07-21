@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/bombsimon/team-betting/pkg"
@@ -31,8 +33,14 @@ func New(dsn string) *pkg.Database {
 		panic(err)
 	}
 
+	gq := goqu.New("mysql", db)
+
+	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
+		gq.Logger(log.New(os.Stdout, "[DEBUG] ", log.LstdFlags))
+	}
+
 	return &pkg.Database{
-		Gq: goqu.New("mysql", db),
+		Gq: gq,
 		DB: db,
 	}
 }
