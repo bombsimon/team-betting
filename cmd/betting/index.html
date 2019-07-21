@@ -4,6 +4,10 @@
   </head>
 
   <style>
+    div {
+      text-align: center;
+    }
+
     #chat {
       text-align: left;
       background: #f1f1f1;
@@ -14,28 +18,28 @@
   </style>
 
   <body>
-    <center>
+    <div>
       <h3>Chat</h3>
       <pre id="chat"></pre>
       <input placeholder="say something" id="text" type="text">
-    </center>
+    </div>
 
     <script>
-      var url = "ws://" + window.location.host + "/ws";
-      var ws = new WebSocket(url);
+      let url = "ws://" + window.location.host + "/ws";
+      let ws = new WebSocket(url);
 
-      var name = "Guest" + Math.floor(Math.random() * 1000);
+      let name = "Guest" + Math.floor(Math.random() * 1000);
 
-      var chat = document.getElementById("chat");
-      var text = document.getElementById("text");
+      let chat = document.getElementById("chat");
+      let text = document.getElementById("text");
 
-      var now = function () {
-        var iso = new Date().toISOString();
+      let now = function () {
+        let iso = new Date().toISOString();
         return iso.split("T")[1].split(".")[0];
       };
 
       ws.onmessage = function (msg) {
-        var line =  now() + " " + msg.data + "\n";
+        let line =  now() + " " + msg.data + "\n";
         chat.innerText += line;
       };
 

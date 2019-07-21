@@ -12,5 +12,5 @@ multiple devices may connect and in realtime bet and analyse the competition.
 Assuming MySQL is running in docker as per `docker-compose.yaml`.
 
 ```sh
-goose --dir migrations/ mysql "root:betting@tcp(localhost:3306)/betting?parseTime=true" up
+goose --dir migrations/ mysql "betting:betting@tcp(127.0.0.1:3306)/betting?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin" up
 ```

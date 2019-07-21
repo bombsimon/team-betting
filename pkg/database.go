@@ -3,7 +3,8 @@ package pkg
 import (
 	"database/sql"
 
-	"github.com/doug-martin/goqu"
+	"github.com/doug-martin/goqu/v7"
+	"github.com/pkg/errors"
 )
 
 // Querier is the interface that implements From() which is use for
