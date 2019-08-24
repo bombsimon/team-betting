@@ -37,55 +37,63 @@ type CompetitionMetrics struct {
 
 // Competition represents one competition, e.g. Eurovision Song Contest 2022.
 type Competition struct {
-	ID          int                 `db:"id"          json:"id"`
-	CreatedAt   time.Time           `db:"created_at"  json:"created_at"`
-	UpdatedAt   null.Time           `db:"updated_at"  json:"updated_at"`
-	Name        string              `db:"name"        json:"name"`
-	Description null.String         `db:"description" json:"description"`
-	Image       null.String         `db:"image"       json:"image"`
-	MinScore    int                 `db:"min_score"   json:"min_score"`
-	MaxScore    int                 `db:"max_score"   json:"max_score"`
-	Locked      bool                `db:"locked"      json:"locked"`
-	Competitors []*Competitor       `db:"-"           json:"competitors"`
-	Metrics     *CompetitionMetrics `db:"-"           json:"metrics"`
+	ID          int         `json:"id"           gorm:"primary_key"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+	DeletedAt   null.Time   `json:"deleted_at"`
+	Name        string      `json:"name"         gorm:"type:varchar(100); not null"`
+	Description null.String `json:"description"  gorm:"type:varchar(255)"`
+	Image       null.String `json:"image"        gorm:"type:varchar(100)`
+	MinScore    int         `json:"min_score"    gorm:"type:int; not null"`
+	MaxScore    int         `json:"max_score"    gorm:"type:int; not null"`
+	Locked      bool        `json:"locked"       gorm:"type:tinyint(1); default 0"`
 }
 
 // Competitor represents a team or player competing in a competition. A
 // Competitor may compete in zero or several Competitions.
 type Competitor struct {
-	ID          int          `db:"id"             json:"id"`
-	CreatedAt   time.Time    `db:"created_at"     json:"created_at"`
-	UpdatedAt   null.Time    `db:"updated_at"     json:"updated_at"`
-	Name        string       `db:"name"           json:"name"`
-	Description null.String  `db:"description"    json:"description"`
-	Image       null.String  `db:"image"          json:"image"`
-	Competition *Competition `db:"-"              json:"competition"`
+	ID          int         `json:"id"          gorm:"primary_key"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   null.Time   `json:"updated_at"`
+	DeletedAt   null.Time   `json:"deleted_at"`
+	Name        string      `json:"name"        gorm:"type:varchar(100); not null"`
+	Description null.String `json:"description" gorm:"type:varchar(255)"`
+	Image       null.String `json:"image"       gorm:"type:varchar(100)`
+}
+
+// CompetitionCompetitor binds a competitor to a competition.
+type CompetitionCompetitor struct {
+	ID            int         `json:"id"          gorm:"primary_key"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     null.Time   `json:"updated_at"`
+	CompetitionID int         `json:"-"           gorm:"column:id_competition; not null"`
+	Competition   Competition `json:"competition"`
+	CompetitorID  int         `json:"-"           gorm:"column:id_competitor; not null"`
+	Competitor    Competitor  `json:"competitor"  gorm:"foreignkey:CompetitorID"`
 }
 
 // Better is someone who can make a Bet on a Competitor.
 type Better struct {
-	ID        int         `db:"id"         json:"id"`
-	CreatedAt time.Time   `db:"created_at" json:"created_at"`
-	UpdatedAt null.Time   `db:"updated_at" json:"updated_at"`
-	Name      string      `db:"name"       json:"name"`
-	Email     string      `db:"email"      json:"email"`
-	Confirmed bool        `db:"confirmed"  json:"confirmed"`
-	Image     null.String `db:"image"      json:"image"`
+	ID        int         `json:"id"         gorm:"primary_key"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt null.Time   `json:"updated_at"`
+	DeletedAt null.Time   `json:"deleted_at"`
+	Confirmed bool        `json:"confirmed"  gorm:"type:tinyint(1); default 0"`
+	Name      string      `json:"name"       gorm:"type:varchar(100); not null"`
+	Email     string      `json:"email"      gorm:"type:varchar(100); not null; unique"`
+	Image     null.String `json:"image"      gorm:"type:varchar(100)`
 }
 
 // Bet is a bet put on a Competitor in a certain Competition.
 type Bet struct {
-	ID                      int          `db:"id"                        json:"id"`
-	CreatedAt               time.Time    `db:"created_at"                json:"created_at"`
-	UpdatedAt               null.Time    `db:"updated_at"                json:"updated_at"`
-	BetterID                int          `db:"id_better"                 json:"id_better"`
-	CompetitionID           int          `db:"id_competition"            json:"id_competition"`
-	CompetitorID            int          `db:"id_competitor"             json:"id_competitor"`
-	CompetitionCompetitorID int          `db:"id_competition_competitor" json:"-"`
-	Score                   null.Int     `db:"score"                     json:"score"`
-	Placing                 null.Int     `db:"placing"                   json:"placing"`
-	Note                    null.String  `db:"note"                      json:"note"`
-	Better                  *Better      `db:"-"                         json:"better"`
-	Competition             *Competition `db:"-"                         json:"competition"`
-	Competitor              *Competitor  `db:"-"                         json:"competitor"`
+	ID                      int                   `json:"id"                     gorm:"primary_key"`
+	CreatedAt               time.Time             `json:"created_at"`
+	UpdatedAt               null.Time             `json:"updated_at"`
+	Score                   null.Int              `json:"score"                  gorm:"type:int"`
+	Placing                 null.Int              `json:"placing"                gorm:"type:int`
+	Note                    null.String           `json:"note"                   gorm:"type:varchar(255)"`
+	Better                  Better                `json:"better"`
+	BetterID                int                   `json:"-"                      gorm:"column:id_better; not null"`
+	CompetitionCompetitor   CompetitionCompetitor `json:"competition_competitor"`
+	CompetitionCompetitorID int                   `json:"-"                      gorm:"column:id_competition_competitor; not null"`
 }

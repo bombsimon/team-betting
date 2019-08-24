@@ -30,9 +30,6 @@ func (b Better) Validate() error {
 // Validate implements validation for a Bet.
 func (b Bet) Validate(minScore, maxScore int) error {
 	return validation.ValidateStruct(&b,
-		validation.Field(&b.BetterID, validation.Required, validation.Min(1)),
-		validation.Field(&b.CompetitionID, validation.Required, validation.Min(1)),
-		validation.Field(&b.CompetitorID, validation.Required, validation.Min(1)),
 		validation.Field(&b.Score, validation.Min(minScore), validation.Max(maxScore)),
 	)
 }

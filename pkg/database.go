@@ -3,14 +3,14 @@ package pkg
 import (
 	"database/sql"
 
-	"github.com/doug-martin/goqu/v7"
+	"github.com/doug-martin/goqu"
 	"github.com/pkg/errors"
 )
 
 // Querier is the interface that implements From() which is use for
 // goqu.Database and goqu.TxDatabase.
 type Querier interface {
-	From(from ...interface{}) *goqu.Dataset
+	From(from ...interface{}) *goqu.SelectDataset
 }
 
 // Database is a type that holds the goqu.Database and the underlying sql.DB
