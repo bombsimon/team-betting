@@ -1,20 +1,23 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/bombsimon/team-betting/pkg"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/bombsimon/team-betting/pkg/database"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/guregu/null"
 	"github.com/jinzhu/gorm"
 )
 
 func main() {
-	db, err := gorm.Open("mysql", "betting:betting@/betting?charset=utf8&parseTime=True&loc=Local")
-	if err != nil {
-		panic("failed to connect database")
-	}
+	db := database.New("").Gorm
 
 	defer db.Close()
+
+	// Don't use pluralis names for table names.
+	db.SingularTable(true)
 
 	// Add all auto migrations.
 	db.AutoMigrate(&pkg.Competition{})
@@ -24,13 +27,23 @@ func main() {
 	// Add foreign keys keys, not done bu auto migrations
 	// https://github.com/jinzhu/gorm/issues/450
 	db.AutoMigrate(&pkg.CompetitionCompetitor{}).
-		AddForeignKey("id_competition", "competitions(id)", "RESTRICT", "RESTRICT").
-		AddForeignKey("id_competitor", "competitors(id)", "RESTRICT", "RESTRICT")
+		AddForeignKey("competition_id", "competition(id)", "RESTRICT", "RESTRICT").
+		AddForeignKey("competitor_id", "competitor(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&pkg.Bet{}).
-		AddForeignKey("id_better", "betters(id)", "RESTRICT", "RESTRICT").
-		AddForeignKey("id_competition_competitor", "competition_competitors(id)", "RESTRICT", "RESTRICT")
+		AddForeignKey("better_id", "better(id)", "RESTRICT", "RESTRICT").
+		AddForeignKey("competition_competitor_id", "competition_competitor(id)", "RESTRICT", "RESTRICT")
 
+	if os.Getenv("ADD_DATA") != "" {
+		testAddData(db)
+	}
+
+	if os.Getenv("GET_DATA") != "" {
+		testGetData(db)
+	}
+}
+
+func testAddData(db *gorm.DB) {
 	// Create test data
 	competition := &pkg.Competition{
 		Name:        "Eurovision Song Contest 2020",
@@ -70,7 +83,9 @@ func main() {
 		CompetitionCompetitor: cc,
 		Score:                 null.IntFrom(6),
 	})
+}
 
+func testGetData(db *gorm.DB) {
 	// Fetch the first bet
 	var bet pkg.Bet
 	db.First(&bet)
@@ -85,5 +100,11 @@ func main() {
 		Related(&bet.CompetitionCompetitor.Competition, "Competition").
 		Related(&bet.CompetitionCompetitor.Competitor, "Competitor")
 
-	spew.Dump(bet)
+	fmt.Printf("%-20s %s\n", "Created", bet.CreatedAt)
+	fmt.Printf("%-20s %s\n", "Better", bet.Better.Name)
+	fmt.Printf("%-20s %s\n", "Competition", bet.CompetitionCompetitor.Competition.Name)
+	fmt.Printf("%-20s %s\n", "Competitor", bet.CompetitionCompetitor.Competitor.Name)
+	fmt.Printf("%-20s %d\n", "Score", bet.Score.ValueOrZero())
+	fmt.Printf("%-20s %d\n", "Placing", bet.Placing.ValueOrZero())
+	fmt.Printf("%-20s %s\n", "Note", bet.Note.ValueOrZero())
 }

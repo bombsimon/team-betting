@@ -229,7 +229,7 @@ func TestService_AddBetter(t *testing.T) {
 				Name:  "Unittest better",
 				Email: "unit@test.se",
 			},
-			errContains: "a user with that email already exist!",
+			errContains: "a user with that email already exist",
 		},
 	}
 
@@ -341,7 +341,31 @@ func TestService_AddBet(t *testing.T) {
 				return
 			}
 
+			// TODO: Check the data is correct
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestPreloadMany2Many(t *testing.T) {
+	s := setupService(t)
+
+	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
+		Name: "Unittest competition",
+	})
+
+	require.NoError(t, err)
+
+	for i := range make([]int, 3) {
+		_, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
+			Name: fmt.Sprintf("Unittest competitor %d", i+1),
+		}, &competition.ID)
+
+		require.NoError(t, err)
+	}
+
+	r, err := s.GetCompetitorsForCompetition(context.Background(), 1)
+
+	require.Nil(t, err)
+	assert.Len(t, r, 3)
 }

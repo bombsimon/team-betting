@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/doug-martin/goqu"
+	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
 
@@ -16,8 +17,9 @@ type Querier interface {
 // Database is a type that holds the goqu.Database and the underlying sql.DB
 // which was used to create the goqu.Database.
 type Database struct {
-	Gq *goqu.Database
-	DB *sql.DB
+	Gorm *gorm.DB
+	Gq   *goqu.Database
+	DB   *sql.DB
 }
 
 // Transaction generats a new transaction.

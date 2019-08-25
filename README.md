@@ -12,5 +12,15 @@ multiple devices may connect and in realtime bet and analyse the competition.
 Assuming MySQL is running in docker as per `docker-compose.yaml`.
 
 ```sh
-goose --dir migrations/ mysql "betting:betting@tcp(127.0.0.1:3306)/betting?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin" up
+goose \
+    --dir migrations/ \
+    mysql \
+    "betting:betting@/betting?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin" \
+    up
+```
+
+Or if you want to use Gorm to run migrations.
+
+```sh
+[ADD_DATA=1] [GET_DATA=1] go run cmd/gorm-migrate/main.go
 ```
