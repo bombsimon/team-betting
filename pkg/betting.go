@@ -56,7 +56,7 @@ type Competition struct {
 	MaxScore    int         `db:"max_score"   json:"max_score"   gorm:"type:int; not null"`
 	Locked      bool        `db:"locked"      json:"locked"      gorm:"type:tinyint(1); default 0"`
 
-	Competitors []*Competitor `db:"-" json:"-" gorm:"many2many:competition_competitor"`
+	Competitors []*Competitor `db:"-" json:"competitors" gorm:"many2many:competition_competitor"`
 }
 
 // Competitor represents a team or player competing in a competition. A
@@ -69,17 +69,8 @@ type Competitor struct {
 	Name        string      `db:"name"        json:"name"        gorm:"type:varchar(100); not null"`
 	Description null.String `db:"description" json:"description" gorm:"type:varchar(255)"`
 	Image       null.String `db:"image"       json:"image"       gorm:"type:varchar(100)`
-}
 
-// CompetitionCompetitor binds a competitor to a competition.
-type CompetitionCompetitor struct {
-	ID            int         `db:"id"             json:"id"          gorm:"primary_key"`
-	CreatedAt     time.Time   `db:"created_at"     json:"created_at"`
-	UpdatedAt     null.Time   `db:"updated_at"     json:"updated_at"`
-	CompetitionID int         `db:"competition_id" json:"-"           gorm:"not null"`
-	Competition   Competition `db:"-"              json:"competition" gorm:"foreignkey:CompetitionID"`
-	CompetitorID  int         `db:"competitor_id"  json:"-"           gorm:"not null"`
-	Competitor    Competitor  `db:"-"              json:"competitor"  gorm:"foreignkey:CompetitorID"`
+	Competitions []*Competition `db:"-" json:"competitions"l gorm:"many2many:competition_competitor"`
 }
 
 // Better is someone who can make a Bet on a Competitor.
@@ -96,18 +87,16 @@ type Better struct {
 
 // Bet is a bet put on a Competitor in a certain Competition.
 type Bet struct {
-	ID                      int                   `db:"id"                        json:"id"                     gorm:"primary_key"`
-	CreatedAt               time.Time             `db:"created_at"                json:"created_at"`
-	UpdatedAt               null.Time             `db:"updated_at"                json:"updated_at"`
-	Score                   null.Int              `db:"score"                     json:"score"                  gorm:"type:int"`
-	Placing                 null.Int              `db:"placing"                   json:"placing"                gorm:"type:int`
-	Note                    null.String           `db:"note"                      json:"note"                   gorm:"type:varchar(255)"`
-	Better                  Better                `db:"-"                         json:"better"`
-	BetterID                int                   `db:"better_id"                 json:"id_better"              gorm:"not null"`
-	CompetitionCompetitor   CompetitionCompetitor `db:"competition_competitor_id" json:"competition_competitor"`
-	CompetitionCompetitorID int                   `db:"-"                         json:"-"                      gorm:"not null"`
-	Competition             Competition           `db:"-"                         json:"competition"`
-	CompetitionID           int                   `db:"-"                         json:"id_competition"         gorm:"-"`
-	Competitor              Competitor            `db:"-"                         json:"competitor"`
-	CompetitorID            int                   `db:"-"                         json:"id_competitor"          gorm:"-"`
+	ID            int          `db:"id"                        json:"id"                     gorm:"primary_key"`
+	CreatedAt     time.Time    `db:"created_at"                json:"created_at"`
+	UpdatedAt     null.Time    `db:"updated_at"                json:"updated_at"`
+	Score         null.Int     `db:"score"                     json:"score"                  gorm:"type:int"`
+	Placing       null.Int     `db:"placing"                   json:"placing"                gorm:"type:int`
+	Note          null.String  `db:"note"                      json:"note"                   gorm:"type:varchar(255)"`
+	Better        *Better      `db:"-"                         json:"better"`
+	BetterID      int          `db:"better_id"                 json:"id_better"              gorm:"not null"`
+	Competition   *Competition `db:"-"                         json:"competition"            gorm:"foreignkey:CompetitionID"`
+	CompetitionID int          `db:"-"                         json:"id_competition"         gorm:"not null"`
+	Competitor    *Competitor  `db:"-"                         json:"competitor"             gorm:"foreignkey:CompetitorID"`
+	CompetitorID  int          `db:"-"                         json:"id_competitor"          gorm:"not null"`
 }

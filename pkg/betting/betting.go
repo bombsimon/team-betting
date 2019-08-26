@@ -100,18 +100,31 @@ func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
 		return errors.Wrap(err, "bad request")
 	}
 
-	var cc pkg.CompetitionCompetitor
-	result := s.DB.Gorm.
-		Where("id_competition = ? AND id_competitor = ?", bet.CompetitionID, bet.CompetitorID).
-		First(&cc)
+	r := s.DB.Gorm.Where(pkg.Competition{
+		ID: bet.CompetitionID,
+		Competitors: []*pkg.Competitor{
+			{ID: bet.CompetitorID},
+		},
+	}).First(&pkg.Competition{})
 
-	if result.RecordNotFound() {
+	if r.RecordNotFound() {
 		return errors.Wrap(pkg.ErrBadRequest, "invalid competition/competitor combination")
 	}
 
+	// TODO
+	// var cc pkg.CompetitionCompetitor
+	// result := s.DB.Gorm.
+	// 	Where("id_competition = ? AND id_competitor = ?", bet.CompetitionID, bet.CompetitorID).
+	// 	First(&cc)
+
+	// if result.RecordNotFound() {
+	// 	return errors.Wrap(pkg.ErrBadRequest, "invalid competition/competitor combination")
+	// }
+
 	where := pkg.Bet{
-		BetterID:                bet.BetterID,
-		CompetitionCompetitorID: cc.ID,
+		BetterID:      bet.BetterID,
+		CompetitionID: bet.CompetitionID,
+		CompetitorID:  bet.CompetitorID,
 	}
 
 	cleaned := pkg.Bet{
@@ -120,7 +133,7 @@ func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
 		Note:    bet.Note,
 	}
 
-	result = s.DB.Gorm.Where(where).
+	result := s.DB.Gorm.Where(where).
 		Assign(pkg.Bet{
 			Placing: cleaned.Placing,
 			Score:   cleaned.Score,
@@ -145,18 +158,19 @@ func (s *Service) AddCompetitorToCompetition(ctx context.Context, competitorID, 
 		return errors.New("invalid competition")
 	}
 
-	result := s.DB.Gorm.Create(&pkg.CompetitionCompetitor{
-		CompetitionID: competitionID,
-		CompetitorID:  competitorID,
-	})
+	// TODO
+	// result := s.DB.Gorm.Create(&pkg.CompetitionCompetitor{
+	// 	CompetitionID: competitionID,
+	// 	CompetitorID:  competitorID,
+	// })
 
-	if err := result.Error; err != nil {
-		if database.ErrType(err) == database.ErrForeignKeyConstraint {
-			return errors.Wrap(pkg.ErrBadRequest, "invalid competitor/competition combination")
-		}
+	// if err := result.Error; err != nil {
+	// 	if database.ErrType(err) == database.ErrForeignKeyConstraint {
+	// 		return errors.Wrap(pkg.ErrBadRequest, "invalid competitor/competition combination")
+	// 	}
 
-		return errors.Wrap(err, "could not add competitor to competition")
-	}
+	// 	return errors.Wrap(err, "could not add competitor to competition")
+	// }
 
 	return nil
 }
@@ -250,6 +264,7 @@ func (s *Service) GetCompetitorsForCompetition(ctx context.Context, competitionI
 	return competition.Competitors, nil
 }
 
+// GetBetsForCompetition returns all bets for a given competition.
 func (s *Service) GetBetsForCompetition(ctx context.Context, competitionID int) ([]*pkg.Bet, error) {
 	var (
 		bets               []*pkg.Bet
@@ -334,9 +349,9 @@ func (s *Service) GetBetsForCompetition(ctx context.Context, competitionID int) 
 	}
 
 	for i := range bets {
-		bets[i].Better = *idToBetter[bets[i].BetterID]
-		bets[i].Competition = *idToCompetition[bets[i].CompetitionID]
-		bets[i].Competitor = *idToCompetitor[bets[i].CompetitorID]
+		bets[i].Better = idToBetter[bets[i].BetterID]
+		bets[i].Competition = idToCompetition[bets[i].CompetitionID]
+		bets[i].Competitor = idToCompetitor[bets[i].CompetitorID]
 	}
 
 	return bets, nil
