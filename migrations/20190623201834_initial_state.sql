@@ -35,13 +35,13 @@ CREATE TABLE competitor (
 -- multiple competitions.
 CREATE TABLE competition_competitor (
     id              INT PRIMARY KEY AUTO_INCREMENT,
-    id_competition  INT NOT NULL,
-    id_competitor   INT NOT NULL,
+    competition_id  INT NOT NULL,
+    competitor_id   INT NOT NULL,
 
-    FOREIGN KEY (id_competition) REFERENCES competition(id),
-    FOREIGN KEY (id_competitor) REFERENCES competitor(id),
+    FOREIGN KEY (competition_id) REFERENCES competition(id) ON DELETE CASCADE,
+    FOREIGN KEY (competitor_id) REFERENCES competitor(id) ON DELETE CASCADE,
 
-    CONSTRAINT idx_competition_competitor UNIQUE (id_competition, id_competitor)
+    CONSTRAINT idx_competition_competitor UNIQUE (competition_id, competitor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
 
 -- A better is someone watching the competition who may cast bets and add notes
@@ -64,15 +64,17 @@ CREATE TABLE bet (
     id                          INT PRIMARY KEY AUTO_INCREMENT,
     created_at                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    id_better                   INT NOT NULL,
-    id_competition_competitor   INT NOT NULL,
+    better_id                   INT NOT NULL,
+    competition_id              INT NOT NULL,
+    competitor_id               INT NOT NULL,
     placing                     INT,
     note                        VARCHAR(255),
 
-    FOREIGN KEY (id_better) REFERENCES better(id),
-    FOREIGN KEY (id_competition_competitor) REFERENCES competition_competitor(id),
+    FOREIGN KEY (better_id) REFERENCES better(id) ON DELETE CASCADE,
+    FOREIGN KEY (competition_id) REFERENCES competition(id) ON DELETE CASCADE,
+    FOREIGN KEY (competitor_id) REFERENCES competitor(id) ON DELETE CASCADE,
 
-    CONSTRAINT idx_better_competition_competitor UNIQUE (id_better, id_competition_competitor)
+    CONSTRAINT idx_better_competition_competitor UNIQUE (better_id, competition_id, competitor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
 
 -- +goose Down

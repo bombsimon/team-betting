@@ -11,6 +11,9 @@ multiple devices may connect and in realtime bet and analyse the competition.
 
 Assuming MySQL is running in docker as per `docker-compose.yaml`.
 
+Install Goose `go get -u github.com/pressly/goose/cmd/goose` and run the
+migration.
+
 ```sh
 goose \
     --dir migrations/ \
