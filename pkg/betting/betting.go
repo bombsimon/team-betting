@@ -94,14 +94,14 @@ func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (*pkg.Bette
 }
 
 // AddBet will add a bet for a better to a competitor in a competition.
-func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
+func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) (*pkg.Bet, error) {
 	competition, err := s.GetCompetition(ctx, bet.CompetitionID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := bet.Validate(competition.MinScore, competition.MaxScore); err != nil {
-		return errors.Wrap(err, "bad request")
+		return nil, errors.Wrap(err, "bad request")
 	}
 
 	// Ensure the competitor actually competes in the competition.
@@ -111,7 +111,7 @@ func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
 		Find(&pkg.Competitor{ID: bet.CompetitorID})
 
 	if r.Error != nil {
-		return errors.Wrap(r.Error, "invalid competition/competitor combination")
+		return nil, errors.Wrap(r.Error, "invalid competition/competitor combination")
 	}
 
 	where := pkg.Bet{
@@ -135,10 +135,10 @@ func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) error {
 		FirstOrCreate(&cleaned)
 
 	if result.Error != nil {
-		return errors.Wrap(result.Error, "could not create or update bet")
+		return nil, errors.Wrap(result.Error, "could not create or update bet")
 	}
 
-	return nil
+	return &cleaned, nil
 }
 
 // GetCompetition will return a competition based on a competition ID.
@@ -159,7 +159,12 @@ func (s *Service) GetCompetition(ctx context.Context, competitionID int) (*pkg.C
 func (s *Service) GetCompetitions(ctx context.Context, competitionIDs []int) ([]*pkg.Competition, error) {
 	var competitions []*pkg.Competition
 
-	if err := s.DB.Gorm.Where(competitionIDs).Find(&competitions).Error; err != nil {
+	q := s.DB.Gorm
+	if len(competitionIDs) > 0 {
+		q = q.Where(competitionIDs)
+	}
+
+	if err := q.Find(&competitions).Error; err != nil {
 		return nil, errors.Wrap(err, "could not get competition")
 	}
 
@@ -184,7 +189,12 @@ func (s *Service) GetCompetitor(ctx context.Context, competitorID int) (*pkg.Com
 func (s *Service) GetCompetitors(ctx context.Context, competitorIDs []int) ([]*pkg.Competitor, error) {
 	var competitors []*pkg.Competitor
 
-	if err := s.DB.Gorm.Where(competitorIDs).Find(&competitors).Error; err != nil {
+	q := s.DB.Gorm
+	if len(competitorIDs) > 0 {
+		q = q.Where(competitorIDs)
+	}
+
+	if err := q.Find(&competitors).Error; err != nil {
 		return nil, errors.Wrap(err, "could not get competition")
 	}
 
@@ -209,11 +219,46 @@ func (s *Service) GetBetter(ctx context.Context, betterID int) (*pkg.Better, err
 func (s *Service) GetBetters(ctx context.Context, betterIDs []int) ([]*pkg.Better, error) {
 	var betters []*pkg.Better
 
-	if err := s.DB.Gorm.Where(betterIDs).Find(&betters).Error; err != nil {
+	q := s.DB.Gorm
+	if len(betterIDs) > 0 {
+		q = q.Where(betterIDs)
+	}
+
+	if err := q.Find(&betters).Error; err != nil {
 		return nil, errors.Wrap(err, "could not get betters")
 	}
 
 	return betters, nil
+}
+
+// GetBet will return a bet based on a bet ID.
+func (s *Service) GetBet(ctx context.Context, betID int) (*pkg.Bet, error) {
+	b, err := s.GetBets(ctx, []int{betID})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(b) != 1 {
+		return nil, errors.Wrap(pkg.ErrNotFound, "no bet found")
+	}
+
+	return b[0], nil
+}
+
+// GetBets will return a list of bets based on bet IDs.
+func (s *Service) GetBets(ctx context.Context, betIDs []int) ([]*pkg.Bet, error) {
+	var bets []*pkg.Bet
+
+	q := s.DB.Gorm
+	if len(betIDs) > 0 {
+		q = q.Where(betIDs)
+	}
+
+	if err := q.Find(&bets).Error; err != nil {
+		return nil, errors.Wrap(err, "could not get bets")
+	}
+
+	return bets, nil
 }
 
 // GetCompetitorsForCompetition returns a slice with all competitors for a given

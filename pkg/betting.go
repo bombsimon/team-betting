@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"time"
 
 	"github.com/guregu/null"
@@ -21,6 +22,26 @@ var (
 	ErrBadRequest = errors.New("bad request")
 	ErrNotFound   = errors.New("not found")
 )
+
+// BettingService represents the service implementing how to bet on teams.
+type BettingService interface {
+	AddCompetition(ctx context.Context, competition *Competition) (*Competition, error)
+	AddCompetitor(ctx context.Context, competitor *Competitor, bindToCompetitionID *int) (*Competitor, error)
+	AddBetter(ctx context.Context, better *Better) (*Better, error)
+	AddBet(ctx context.Context, bet *Bet) (*Bet, error)
+
+	GetCompetition(ctx context.Context, id int) (*Competition, error)
+	GetCompetitions(ctx context.Context, ids []int) ([]*Competition, error)
+	GetCompetitor(ctx context.Context, id int) (*Competitor, error)
+	GetCompetitors(ctx context.Context, ids []int) ([]*Competitor, error)
+	GetBetter(ctx context.Context, id int) (*Better, error)
+	GetBetters(ctx context.Context, ids []int) ([]*Better, error)
+	GetBet(ctx context.Context, id int) (*Bet, error)
+	GetBets(ctx context.Context, ids []int) ([]*Bet, error)
+
+	GetCompetitorsForCompetition(ctx context.Context, id int) ([]*Competitor, error)
+	GetBetsForCompetition(ctx context.Context, id int) ([]*Bet, error)
+}
 
 // MetricValue represents who has what value, e.g. who has the lowest average
 // and what the value is.
