@@ -10,10 +10,7 @@ import (
 	"github.com/bombsimon/team-betting/pkg"
 	"github.com/jinzhu/gorm"
 
-	"github.com/doug-martin/goqu"
-
 	// Import MySQL dialects for side effects.
-	_ "github.com/doug-martin/goqu/dialect/mysql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -41,8 +38,6 @@ func New(dsn string) *pkg.Database {
 		panic(err)
 	}
 
-	gq := goqu.New("mysql", db)
-
 	gdb, err := gorm.Open("mysql", dsn)
 	if err != nil {
 		panic(err)
@@ -53,15 +48,12 @@ func New(dsn string) *pkg.Database {
 	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
 		logger := log.New(os.Stdout, "[DEBUG] ", log.LstdFlags)
 
-		gq.Logger(logger)
-
 		gdb.LogMode(true)
 		gdb.SetLogger(logger)
 	}
 
 	return &pkg.Database{
 		Gorm: gdb,
-		Gq:   gq,
 		DB:   db,
 	}
 }

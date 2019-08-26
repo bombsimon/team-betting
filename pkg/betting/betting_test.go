@@ -127,61 +127,6 @@ func TestService_AddCompetitor(t *testing.T) {
 		})
 	}
 }
-func TestService_AddCompetitorToCompetition(t *testing.T) {
-	s := setupService(t)
-
-	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
-		Name: "Unittest competition",
-	})
-
-	require.NoError(t, err)
-
-	competitor, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
-		Name: "Unittest competitor",
-	}, nil)
-
-	require.NoError(t, err)
-
-	cases := []struct {
-		description   string
-		competitorID  int
-		competitionID int
-		errContains   string
-	}{
-		{
-			description: "all missing data",
-			errContains: "invalid competitor",
-		},
-		{
-			description:   "competition/competitor does not exist",
-			competitorID:  1000,
-			competitionID: 1000,
-			errContains:   "invalid competitor/competition combination: bad request",
-		},
-		{
-			description:   "successful bind",
-			competitorID:  competitor.ID,
-			competitionID: competition.ID,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.description, func(t *testing.T) {
-			ctx := context.Background()
-
-			err := s.AddCompetitorToCompetition(ctx, tc.competitorID, tc.competitionID)
-
-			if tc.errContains != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tc.errContains)
-
-				return
-			}
-
-			require.NoError(t, err)
-		})
-	}
-}
 
 func TestService_AddBetter(t *testing.T) {
 	s := setupService(t)
@@ -266,6 +211,12 @@ func TestService_AddBet(t *testing.T) {
 
 	require.NoError(t, err)
 
+	competitionWithoutCompetitors, err := s.AddCompetition(context.Background(), &pkg.Competition{
+		Name: "Sad unittest competition",
+	})
+
+	require.NoError(t, err)
+
 	for i := range make([]int, 3) {
 		c, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
 			Name: fmt.Sprintf("Unittest competitor %d", i+1)},
@@ -306,6 +257,16 @@ func TestService_AddBet(t *testing.T) {
 			errContains: "bad request: id_better: cannot be blank; id_competitor: cannot be blank.",
 		},
 		{
+			description: "competitor does not compete under competition",
+			bet: &pkg.Bet{
+				BetterID:      betterIDs[0],
+				CompetitionID: competitionWithoutCompetitors.ID,
+				CompetitorID:  competitorIDs[0],
+				Note:          null.StringFrom("This shouldn't work"),
+			},
+			errContains: "invalid competition/competitor combination",
+		},
+		{
 			description: "successful bet",
 			bet: &pkg.Bet{
 				BetterID:      betterIDs[0],
@@ -324,6 +285,17 @@ func TestService_AddBet(t *testing.T) {
 				CompetitorID:  competitorIDs[0],
 				Placing:       null.IntFrom(5),
 				Note:          null.StringFrom("Some other stuff"),
+			},
+		},
+		{
+			description: "successful second bet",
+			bet: &pkg.Bet{
+				BetterID:      betterIDs[1],
+				CompetitionID: competition.ID,
+				CompetitorID:  competitorIDs[0],
+				Placing:       null.IntFrom(3),
+				Score:         null.IntFrom(6),
+				Note:          null.StringFrom("Want more bets"),
 			},
 		},
 	}
@@ -345,6 +317,13 @@ func TestService_AddBet(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+
+	bets, err := s.GetBetsForCompetition(context.Background(), 1)
+
+	require.NoError(t, err)
+	require.NotNil(t, bets)
+
+	assert.Len(t, bets, 2)
 }
 
 func TestPreloadMany2Many(t *testing.T) {

@@ -96,7 +96,7 @@ type Bet struct {
 	Better        *Better      `db:"-"                         json:"better"`
 	BetterID      int          `db:"better_id"                 json:"id_better"              gorm:"not null"`
 	Competition   *Competition `db:"-"                         json:"competition"            gorm:"foreignkey:CompetitionID"`
-	CompetitionID int          `db:"-"                         json:"id_competition"         gorm:"not null"`
+	CompetitionID int          `db:"competition_id"            json:"id_competition"         gorm:"not null"`
 	Competitor    *Competitor  `db:"-"                         json:"competitor"             gorm:"foreignkey:CompetitorID"`
-	CompetitorID  int          `db:"-"                         json:"id_competitor"          gorm:"not null"`
+	CompetitorID  int          `db:"competitor_id"             json:"id_competitor"          gorm:"not null"`
 }

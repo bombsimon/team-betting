@@ -3,44 +3,38 @@ package pkg
 import (
 	"database/sql"
 
-	"github.com/doug-martin/goqu"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
 
-// Querier is the interface that implements From() which is use for
-// goqu.Database and goqu.TxDatabase.
-type Querier interface {
-	From(from ...interface{}) *goqu.SelectDataset
-}
-
-// Database is a type that holds the goqu.Database and the underlying sql.DB
-// which was used to create the goqu.Database.
+// Database is a type that holds the DB/ORM flavour and the underlying sql.DB
+// which can be used to create additional DBs or transactions.
 type Database struct {
 	Gorm *gorm.DB
-	Gq   *goqu.Database
 	DB   *sql.DB
 }
 
-// Transaction generats a new transaction.
-func (d *Database) Transaction() (*goqu.TxDatabase, error) {
-	return d.Gq.Begin()
+// Transaction generates a new transaction.
+func (d *Database) Transaction() (*gorm.DB, error) {
+	tx := d.Gorm.Begin()
+
+	return tx, tx.Error
 }
 
 // CommitOrRollback takes a transaction and an error. If the error is nil, the
 // transaction will be committed, otherwise it will be rolled back. If the
 // commit or rollback fails a new error is returned, wrapping the original error
 // if that's not nil.
-func CommitOrRollback(tx *goqu.TxDatabase, err error) error {
+func CommitOrRollback(tx *gorm.DB, err error) error {
 	if err != nil {
-		if tErr := tx.Rollback(); tErr != nil {
+		if tErr := tx.Rollback().Error; tErr != nil {
 			return errors.Wrap(err, tErr.Error())
 		}
 
 		return err
 	}
 
-	if tErr := tx.Commit(); tErr != nil {
+	if tErr := tx.Commit().Error; tErr != nil {
 		return tErr
 	}
 
