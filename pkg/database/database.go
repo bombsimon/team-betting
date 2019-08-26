@@ -8,15 +8,16 @@ import (
 	"strings"
 
 	"github.com/bombsimon/team-betting/pkg"
+	"github.com/jinzhu/gorm"
 
-	"github.com/doug-martin/goqu/v7"
-
-	_ "github.com/doug-martin/goqu/v7/dialect/mysql"
+	// Import MySQL dialects for side effects.
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// ErrorType represents a type for database errors.
 type ErrorType int
 
+// Known errors from the database (MySQL)
 const (
 	ErrUnknown ErrorType = iota
 	ErrDuplicateKey
@@ -28,23 +29,36 @@ const (
 // New will connect to a database based on passed DSN and return a new
 // *pkg.Database type.
 func New(dsn string) *pkg.Database {
+	if dsn == "" {
+		dsn = "betting:betting@/betting?charset=utf8&parseTime=True&loc=Local"
+	}
+
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(err)
 	}
 
-	gq := goqu.New("mysql", db)
+	gdb, err := gorm.Open("mysql", dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	gdb.SingularTable(true)
 
 	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
-		gq.Logger(log.New(os.Stdout, "[DEBUG] ", log.LstdFlags))
+		logger := log.New(os.Stdout, "[DEBUG] ", log.LstdFlags)
+
+		gdb.LogMode(true)
+		gdb.SetLogger(logger)
 	}
 
 	return &pkg.Database{
-		Gq: gq,
-		DB: db,
+		Gorm: gdb,
+		DB:   db,
 	}
 }
 
+// ErrType will return an ErrorType from a regular error from the database.
 func ErrType(err error) ErrorType {
 	errMap := map[string]ErrorType{
 		"1062": ErrDuplicateKey,
