@@ -20,16 +20,20 @@ func main() {
 	db.SingularTable(true)
 
 	// Add all auto migrations.
-	db.AutoMigrate(&pkg.Competition{})
-	db.AutoMigrate(&pkg.Competitor{})
 	db.AutoMigrate(&pkg.Better{})
 
 	// Add foreign keys keys, not done bu auto migrations
 	// https://github.com/jinzhu/gorm/issues/450
+	db.AutoMigrate(&pkg.Competitor{}).
+		AddForeignKey("created_by_id", "better(id)", "CASCADE", "CASCADE")
+
+	db.AutoMigrate(&pkg.Competition{}).
+		AddForeignKey("created_by_id", "better(id)", "CASCADE", "CASCADE")
+
 	db.AutoMigrate(&pkg.Bet{}).
-		AddForeignKey("better_id", "better(id)", "RESTRICT", "RESTRICT").
-		AddForeignKey("competition_id", "competition(id)", "RESTRICT", "RESTRICT").
-		AddForeignKey("competitor_id", "competitor(id)", "RESTRICT", "RESTRICT")
+		AddForeignKey("better_id", "better(id)", "CASCADE", "CASCADE").
+		AddForeignKey("competition_id", "competition(id)", "CASCADE", "CASCADE").
+		AddForeignKey("competitor_id", "competitor(id)", "CASCADE", "CASCADE")
 
 	if os.Getenv("ADD_DATA") != "" {
 		testAddData(db)
@@ -41,20 +45,32 @@ func main() {
 }
 
 func testAddData(db *gorm.DB) {
-	// Create test data
-	competition := &pkg.Competition{
-		Name:        "Eurovision Song Contest 2020",
-		Description: null.StringFrom("The one that started it all"),
-	}
-
-	competitors := []*pkg.Competitor{
-		{Name: "Sweden - Swedish song"},
-		{Name: "Norway - Norwegian song"},
-	}
-
 	betters := []*pkg.Better{
 		{Name: "Testy Testsson", Email: "testy@testsson.se", Confirmed: true},
 		{Name: "Another Tester", Email: "testy@anotherone.se"},
+	}
+
+	for _, b := range betters {
+		db.Create(b)
+	}
+
+	competition := &pkg.Competition{
+		Name:        "Eurovision Song Contest 2020",
+		Description: null.StringFrom("The one that started it all"),
+		CreatedBy:   betters[0],
+	}
+
+	competitors := []*pkg.Competitor{
+		{
+			Name:        "Sweden",
+			Description: null.StringFrom("Take me to your heaven"),
+			CreatedBy:   betters[0],
+		},
+		{
+			Name:        "Norway",
+			Description: null.StringFrom("Norwegian song"),
+			CreatedBy:   betters[0],
+		},
 	}
 
 	db.Create(competition)
@@ -63,10 +79,6 @@ func testAddData(db *gorm.DB) {
 		c.Competitions = []*pkg.Competition{competition}
 
 		db.Create(c)
-	}
-
-	for _, b := range betters {
-		db.Create(b)
 	}
 
 	db.Create(&pkg.Bet{

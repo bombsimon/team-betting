@@ -138,6 +138,14 @@ func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) (*pkg.Bet, error) {
 		return nil, errors.Wrap(result.Error, "could not create or update bet")
 	}
 
+	// Ensure fields are non-nil when inflating.
+	cleaned.Better = &pkg.Better{}
+	cleaned.Competitor = &pkg.Competitor{}
+
+	s.DB.Gorm.Model(&cleaned).
+		Related(&cleaned.Better, "BetterID").
+		Related(&cleaned.Competitor, "CompetitorID")
+
 	return &cleaned, nil
 }
 
@@ -164,7 +172,15 @@ func (s *Service) GetCompetitions(ctx context.Context, competitionIDs []int) ([]
 		q = q.Where(competitionIDs)
 	}
 
-	if err := q.Find(&competitions).Error; err != nil {
+	err := q.
+		Preload("CreatedBy").
+		Preload("Competitors").
+		Preload("Bets.Better").
+		Preload("Bets.Competitor").
+		Find(&competitions).
+		Error
+
+	if err != nil {
 		return nil, errors.Wrap(err, "could not get competition")
 	}
 
