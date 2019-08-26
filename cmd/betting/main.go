@@ -1,42 +1,62 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
+	"github.com/bombsimon/team-betting/pkg/betting"
+	"github.com/bombsimon/team-betting/pkg/database"
+	bhttp "github.com/bombsimon/team-betting/pkg/http"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/olahol/melody.v1"
 )
 
 func main() {
-	r := gin.Default()
-	m := melody.New()
+	var (
+		r              = gin.Default()
+		m              = melody.New()
+		logger         = log.New(os.Stdout, "TB: ", log.LstdFlags)
+		bettingService = &betting.Service{
+			DB: database.New(""),
+		}
+		httpService = bhttp.Service{
+			Betting: bettingService,
+		}
+	)
 
-	r.GET("/", mockFunc)
+	r.GET("/competition", httpService.GetCompetitions)
+	r.POST("/competition", httpService.AddCompetition)
+	r.GET("/competition/:id", httpService.GetCompetition)
 
-	r.POST("/competition", mockFunc)
-	r.GET("/competition/:id", mockFunc)
+	r.POST("/competition/:id/competitor", notImplemented)
+	r.DELETE("/competition/:id/competitor", notImplemented)
 
-	r.POST("/competition/:id/competitor", mockFunc)
-	r.DELETE("/competition/:id/competitor", mockFunc)
-
-	r.POST("/better", mockFunc)
+	r.POST("/better", notImplemented)
 
 	r.GET("/test", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")
 	})
 
 	r.GET("/ws", func(c *gin.Context) {
-		m.HandleRequest(c.Writer, c.Request)
+		if err := m.HandleRequest(c.Writer, c.Request); err != nil {
+			logger.Printf("could not handle WS request: %s", err.Error())
+		}
 	})
 
 	// Just broadcast all messages to everyone when a connection is upgrade to
 	// websocket.
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		m.Broadcast(msg)
+		if err := m.Broadcast(msg); err != nil {
+			logger.Printf("could not broadcast ws message")
+		}
 	})
 
-	r.Run(":5000")
+	if err := r.Run(":5000"); err != nil {
+		panic(err)
+	}
 }
 
-func mockFunc(c *gin.Context) {
+func notImplemented(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "not implemented"})
 }
