@@ -7,10 +7,31 @@ services:
     image: mysql:latest
     ports:
       - "3306:3306"
+    expose:
+      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: betting
       MYSQL_USER: betting
       MYSQL_PASSWORD: betting
       MYSQL_DATABASE: betting
+    command: mysqld --default-authentication-plugin=mysql_native_password
     tty: true
-    network_mode: bridge
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  betting:
+    container_name: team-betting
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: team-betting
+    ports:
+      - "5000:5000"
+    tty:
+      true
+    links:
+      - mysql
+    depends_on:
+      - mysql

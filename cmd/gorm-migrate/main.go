@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	db := database.New("").Gorm
+	db := database.New(os.Getenv("DB_DSN")).Gorm
 
 	defer db.Close()
 

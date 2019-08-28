@@ -189,5 +189,9 @@ func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response inte
 		return
 	}
 
+	if broadcast != nil {
+		_ = s.WS.Broadcast(broadcast)
+	}
+
 	c.JSON(http.StatusOK, response)
 }
