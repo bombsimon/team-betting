@@ -66,6 +66,25 @@ func (s *Service) AddCompetition(c *gin.Context) {
 	c.JSON(http.StatusOK, comp)
 }
 
+// DeleteCompetition returns a competition (if it exists).
+func (s *Service) DeleteCompetition(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	if err := s.Betting.DeleteCompetition(context.Background(), id); err != nil {
+		if errors.Cause(err) == pkg.ErrNotFound {
+			c.JSON(http.StatusNotFound, nil)
+
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
 // AddBet adds a bet.
 func (s *Service) AddBet(c *gin.Context) {
 	var bet pkg.Bet

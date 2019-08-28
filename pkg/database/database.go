@@ -46,7 +46,7 @@ func New(dsn string) *pkg.Database {
 	gdb.SingularTable(true)
 
 	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
-		logger := log.New(os.Stdout, "[DEBUG] ", log.LstdFlags)
+		logger := log.New(os.Stdout, "[DB DEBUG] ", log.LstdFlags)
 
 		gdb.LogMode(true)
 		gdb.SetLogger(logger)

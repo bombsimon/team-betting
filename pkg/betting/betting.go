@@ -277,6 +277,20 @@ func (s *Service) GetBets(ctx context.Context, betIDs []int) ([]*pkg.Bet, error)
 	return bets, nil
 }
 
+// DeleteCompetition will delete a competition
+func (s *Service) DeleteCompetition(ctx context.Context, id int) error {
+	c, err := s.GetCompetition(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.DB.Gorm.Delete(c).Error; err != nil {
+		return errors.Wrap(err, "could not delete competition")
+	}
+
+	return nil
+}
+
 // GetCompetitorsForCompetition returns a slice with all competitors for a given
 // competition.
 func (s *Service) GetCompetitorsForCompetition(ctx context.Context, competitionID int) ([]*pkg.Competitor, error) {

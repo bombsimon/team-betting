@@ -39,7 +39,7 @@ type BettingService interface {
 	GetBet(ctx context.Context, id int) (*Bet, error)
 	GetBets(ctx context.Context, ids []int) ([]*Bet, error)
 
-	// DeleteCompetition(ctx context.Context, id int) error
+	DeleteCompetition(ctx context.Context, id int) error
 	// DeleteCompetitor(ctx context.Context, id int) error
 	// DeleteBetter(ctx context.Context, id int) error
 	// DeleteBet(ctx context.Context, id int) error
