@@ -14,59 +14,59 @@ import (
 
 func main() {
 	var (
-		r      = gin.Default()
-		m      = melody.New()
-		logger = log.New(os.Stdout, "TB: ", log.LstdFlags)
+		router    = gin.Default()
+		wsManager = melody.New()
+		logger    = log.New(os.Stdout, "TB: ", log.LstdFlags)
 
 		bettingService = &betting.Service{
-			DB: database.New(""),
+			DB: database.New(os.Getenv("DB_DSN")),
 		}
 
 		httpService = bhttp.Service{
 			Betting: bettingService,
-			WS:      m,
+			WS:      wsManager,
 		}
 	)
 
-	r.GET("/competition", httpService.GetCompetitions)
-	r.POST("/competition", httpService.AddCompetition)
-	r.GET("/competition/:id", httpService.GetCompetition)
-	r.DELETE("/competition/:id", notImplemented)
+	router.GET("/competition", httpService.GetCompetitions)
+	router.POST("/competition", httpService.AddCompetition)
+	router.GET("/competition/:id", httpService.GetCompetition)
+	router.DELETE("/competition/:id", httpService.DeleteCompetition)
 
-	r.GET("/competitor", notImplemented)
-	r.POST("/competitor", notImplemented)
-	r.GET("/competitor/:id", notImplemented)
-	r.DELETE("/competitor/:id", notImplemented)
+	router.GET("/competitor", notImplemented)
+	router.POST("/competitor", notImplemented)
+	router.GET("/competitor/:id", notImplemented)
+	router.DELETE("/competitor/:id", notImplemented)
 
-	r.GET("/better", notImplemented)
-	r.POST("/better", notImplemented)
-	r.GET("/better/:id", notImplemented)
-	r.DELETE("/better/:id", notImplemented)
+	router.GET("/better", notImplemented)
+	router.POST("/better", notImplemented)
+	router.GET("/better/:id", notImplemented)
+	router.DELETE("/better/:id", notImplemented)
 
-	r.GET("/bet", notImplemented)
-	r.POST("/bet", httpService.AddBet)
-	r.GET("/bet/:id", notImplemented)
-	r.DELETE("/bet/:id", notImplemented)
+	router.GET("/bet", notImplemented)
+	router.POST("/bet", httpService.AddBet)
+	router.GET("/bet/:id", notImplemented)
+	router.DELETE("/bet/:id", notImplemented)
 
-	r.GET("/test", func(c *gin.Context) {
+	router.GET("/test", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
-		if err := m.HandleRequest(c.Writer, c.Request); err != nil {
+	router.GET("/ws", func(c *gin.Context) {
+		if err := wsManager.HandleRequest(c.Writer, c.Request); err != nil {
 			logger.Printf("could not handle WS request: %s", err.Error())
 		}
 	})
 
 	// Just broadcast all messages to everyone when a connection is upgrade to
 	// websocket.
-	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		if err := m.Broadcast(msg); err != nil {
+	wsManager.HandleMessage(func(s *melody.Session, msg []byte) {
+		if err := wsManager.Broadcast(msg); err != nil {
 			logger.Printf("could not broadcast ws message")
 		}
 	})
 
-	if err := r.Run(":5000"); err != nil {
+	if err := router.Run(":5000"); err != nil {
 		panic(err)
 	}
 }
