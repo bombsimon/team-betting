@@ -33,20 +33,20 @@ func main() {
 	router.GET("/competition/:id", httpService.GetCompetition)
 	router.DELETE("/competition/:id", httpService.DeleteCompetition)
 
-	router.GET("/competitor", notImplemented)
-	router.POST("/competitor", notImplemented)
-	router.GET("/competitor/:id", notImplemented)
-	router.DELETE("/competitor/:id", notImplemented)
+	router.GET("/competitor", httpService.GetCompetitor)
+	router.POST("/competitor", httpService.AddCompetitor)
+	router.GET("/competitor/:id", httpService.GetCompetitor)
+	router.DELETE("/competitor/:id", httpService.DeleteCompetitor)
 
-	router.GET("/better", notImplemented)
-	router.POST("/better", notImplemented)
-	router.GET("/better/:id", notImplemented)
-	router.DELETE("/better/:id", notImplemented)
+	router.GET("/better", httpService.GetBetters)
+	router.POST("/better", httpService.AddBetter)
+	router.GET("/better/:id", httpService.GetBetter)
+	router.DELETE("/better/:id", httpService.DeleteBetter)
 
-	router.GET("/bet", notImplemented)
-	router.POST("/bet", httpService.AddBet)
-	router.GET("/bet/:id", notImplemented)
-	router.DELETE("/bet/:id", notImplemented)
+	router.GET("/bet", httpService.GetBet)
+	router.PUT("/bet", httpService.AddBet)
+	router.GET("/bet/:id", httpService.GetBets)
+	router.DELETE("/bet/:id", httpService.DeleteBet)
 
 	router.GET("/test", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")

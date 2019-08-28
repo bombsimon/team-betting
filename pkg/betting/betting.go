@@ -291,6 +291,48 @@ func (s *Service) DeleteCompetition(ctx context.Context, id int) error {
 	return nil
 }
 
+// DeleteCompetitor will delete a competitor.
+func (s *Service) DeleteCompetitor(ctx context.Context, id int) error {
+	c, err := s.GetCompetitor(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.DB.Gorm.Delete(c).Error; err != nil {
+		return errors.Wrap(err, "could not delete competitor")
+	}
+
+	return nil
+}
+
+// DeleteBetter will delete a better.
+func (s *Service) DeleteBetter(ctx context.Context, id int) error {
+	b, err := s.GetBetter(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.DB.Gorm.Delete(b).Error; err != nil {
+		return errors.Wrap(err, "could not delete better")
+	}
+
+	return nil
+}
+
+// DeleteBet will delete a bet.
+func (s *Service) DeleteBet(ctx context.Context, id int) error {
+	b, err := s.GetBet(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.DB.Gorm.Delete(b).Error; err != nil {
+		return errors.Wrap(err, "could not delete bet")
+	}
+
+	return nil
+}
+
 // GetCompetitorsForCompetition returns a slice with all competitors for a given
 // competition.
 func (s *Service) GetCompetitorsForCompetition(ctx context.Context, competitionID int) ([]*pkg.Competitor, error) {
