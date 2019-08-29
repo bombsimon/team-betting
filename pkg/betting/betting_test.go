@@ -32,9 +32,29 @@ func setupService(t *testing.T) *Service {
 		require.NoError(t, err)
 	}
 
-	return &Service{
+	s := &Service{
 		DB: db,
 	}
+
+	// Ensure there's always at least one better.
+	_, err := s.AddBetter(context.Background(), &pkg.Better{
+		Name:  "Unittest better",
+		Email: "user@iamveryunique.se",
+	})
+
+	require.NoError(t, err)
+
+	return s
+}
+
+func (s *Service) anyBetter() *pkg.Better {
+	var b pkg.Better
+
+	if err := s.DB.Gorm.First(&b).Error; err != nil {
+		panic(err)
+	}
+
+	return &b
 }
 
 func TestService_AddCompetition(t *testing.T) {
@@ -53,6 +73,7 @@ func TestService_AddCompetition(t *testing.T) {
 		{
 			description: "successful create",
 			competition: &pkg.Competition{
+				CreatedByID: s.anyBetter().ID,
 				Name:        "Unittest Challenge",
 				Description: null.StringFrom("A test made for unit testing"),
 			},
@@ -60,6 +81,7 @@ func TestService_AddCompetition(t *testing.T) {
 		{
 			description: "successful create with emojis",
 			competition: &pkg.Competition{
+				CreatedByID: s.anyBetter().ID,
 				Name:        "Just for cats 😸",
 				Description: null.StringFrom("Cat game only! 😻"),
 			},
@@ -102,6 +124,7 @@ func TestService_AddCompetitor(t *testing.T) {
 		{
 			description: "successful create",
 			competitor: &pkg.Competitor{
+				CreatedByID: s.anyBetter().ID,
 				Name:        "Unittest Competitor",
 				Description: null.StringFrom("Someone who can compete!"),
 			},
@@ -130,18 +153,6 @@ func TestService_AddCompetitor(t *testing.T) {
 
 func TestService_AddBetter(t *testing.T) {
 	s := setupService(t)
-
-	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
-		Name: "Unittest competition",
-	})
-
-	require.NoError(t, err)
-
-	_, err = s.AddCompetitor(context.Background(), &pkg.Competitor{
-		Name: "Unittest competitor",
-	}, &competition.ID)
-
-	require.NoError(t, err)
 
 	cases := []struct {
 		description string
@@ -206,22 +217,24 @@ func TestService_AddBet(t *testing.T) {
 	)
 
 	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
-		Name: "Unittest competition",
+		CreatedByID: s.anyBetter().ID,
+		Name:        "Unittest competition",
 	})
 
 	require.NoError(t, err)
 
 	competitionWithoutCompetitors, err := s.AddCompetition(context.Background(), &pkg.Competition{
-		Name: "Sad unittest competition",
+		CreatedByID: s.anyBetter().ID,
+		Name:        "Sad unittest competition",
 	})
 
 	require.NoError(t, err)
 
 	for i := range make([]int, 3) {
 		c, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
-			Name: fmt.Sprintf("Unittest competitor %d", i+1)},
-			&competition.ID,
-		)
+			CreatedByID: s.anyBetter().ID,
+			Name:        fmt.Sprintf("Unittest competitor %d", i+1),
+		}, &competition.ID)
 
 		require.NoError(t, err)
 		require.NotNil(t, c)
@@ -304,7 +317,7 @@ func TestService_AddBet(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			ctx := context.Background()
 
-			err := s.AddBet(ctx, tc.bet)
+			_, err := s.AddBet(ctx, tc.bet)
 
 			if tc.errContains != "" {
 				require.Error(t, err)
@@ -330,14 +343,16 @@ func TestPreloadMany2Many(t *testing.T) {
 	s := setupService(t)
 
 	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
-		Name: "Unittest competition",
+		CreatedByID: s.anyBetter().ID,
+		Name:        "Unittest competition",
 	})
 
 	require.NoError(t, err)
 
 	for i := range make([]int, 3) {
 		_, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
-			Name: fmt.Sprintf("Unittest competitor %d", i+1),
+			CreatedByID: s.anyBetter().ID,
+			Name:        fmt.Sprintf("Unittest competitor %d", i+1),
 		}, &competition.ID)
 
 		require.NoError(t, err)
@@ -347,4 +362,85 @@ func TestPreloadMany2Many(t *testing.T) {
 
 	require.Nil(t, err)
 	assert.Len(t, r, 3)
+}
+
+func TestGetCompetitionMetrics(t *testing.T) {
+	var (
+		s             = setupService(t)
+		competitorIDs []int
+		betterIDs     []int
+	)
+
+	competition, err := s.AddCompetition(context.Background(), &pkg.Competition{
+		Name:        "Unittest competition",
+		CreatedByID: s.anyBetter().ID,
+	})
+
+	require.NoError(t, err)
+
+	for i := range make([]int, 3) {
+		c, err := s.AddCompetitor(context.Background(), &pkg.Competitor{
+			CreatedByID: s.anyBetter().ID,
+			Name:        fmt.Sprintf("Unittest competitor %d", i+1),
+		}, &competition.ID)
+
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		competitorIDs = append(competitorIDs, c.ID)
+
+		b, err := s.AddBetter(context.Background(), &pkg.Better{
+			Name:  fmt.Sprintf("Unittest better %d", i+1),
+			Email: fmt.Sprintf("user%d@test.se", i+1),
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		betterIDs = append(betterIDs, b.ID)
+	}
+
+	for i := range make([]int, 3) {
+		_, err := s.AddBet(context.Background(), &pkg.Bet{
+			BetterID:      betterIDs[0],
+			CompetitionID: competition.ID,
+			CompetitorID:  competitorIDs[i],
+			Placing:       null.IntFrom(2),
+			Score:         null.IntFrom(int64(0 + i)),
+			Note:          null.StringFrom("Want more bets"),
+		})
+
+		require.NoError(t, err)
+
+		_, err = s.AddBet(context.Background(), &pkg.Bet{
+			BetterID:      betterIDs[1],
+			CompetitionID: competition.ID,
+			CompetitorID:  competitorIDs[i],
+			Placing:       null.IntFrom(int64(i * i)),
+			Score:         null.IntFrom(int64(10 - i)),
+			Note:          null.StringFrom("Another one with some notes here"),
+		})
+
+		require.NoError(t, err)
+	}
+
+	m, err := s.GetCompetitionMetrics(context.Background(), competition.ID)
+
+	require.NoError(t, err)
+
+	assert.Equal(t, "Unittest better 2", m.HighestAverageBetter.Who.Name)
+	assert.Equal(t, m.HighestAverageBetter.Value, float64(9))
+	assert.Equal(t, m.LowestAverageBetter.Who.Name, "Unittest better 1")
+	assert.Equal(t, m.LowestAverageBetter.Value, float64(1))
+	assert.Equal(t, m.MostTopScores.Who.Name, "Unittest better 2")
+	assert.Equal(t, m.MostTopScores.Value, 1)
+	assert.Equal(t, m.MostBottomScores.Who.Name, "Unittest better 1")
+	assert.Equal(t, m.MostBottomScores.Value, 1)
+	assert.Equal(t, m.LongestNote.Who.Name, "Unittest better 2")
+	assert.Equal(t, m.LongestNote.Value, "Another one with some notes here")
+	assert.Equal(t, m.ShortestNote.Who.Name, "Unittest better 1")
+	assert.Equal(t, m.ShortestNote.Value, "Want more bets")
+	assert.Equal(t, m.NumberOfBottomScores, 1)
+	assert.Equal(t, m.NumberOfTopScores, 1)
+	assert.Equal(t, m.GroupAverageScore, float64(5))
 }

@@ -44,8 +44,10 @@ type BettingService interface {
 	DeleteBetter(ctx context.Context, id int) error
 	DeleteBet(ctx context.Context, id int) error
 
+	GetCompetitionMetrics(ctx context.Context, id int) (*CompetitionMetrics, error)
 	GetCompetitorsForCompetition(ctx context.Context, id int) ([]*Competitor, error)
 	GetBetsForCompetition(ctx context.Context, id int) ([]*Bet, error)
+	GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*Competition, []*Competitor, []*Bet, error)
 }
 
 // MetricValue represents who has what value, e.g. who has the lowest average
@@ -62,8 +64,8 @@ type CompetitionMetrics struct {
 	LowestAverageBetter  MetricValue
 	MostTopScores        MetricValue
 	MostBottomScores     MetricValue
-	LongestNotes         MetricValue
-	ShortestNotes        MetricValue
+	LongestNote          MetricValue
+	ShortestNote         MetricValue
 	NumberOfBottomScores int
 	NumberOfTopScores    int
 	GroupAverageScore    float64
@@ -71,21 +73,22 @@ type CompetitionMetrics struct {
 
 // Competition represents one competition, e.g. Eurovision Song Contest 2022.
 type Competition struct {
-	ID          int           `db:"id"          json:"id"            gorm:"primary_key"`
-	CreatedAt   time.Time     `db:"created_at"  json:"created_at"`
-	UpdatedAt   time.Time     `db:"updated_at"  json:"updated_at"`
-	DeletedAt   null.Time     `db:"deleted_at"  json:"deleted_at"`
-	CreatedBy   *Better       `db:"-"           json:"created_by"    gorm:"foreignkey:CreatedByID"`
-	CreatedByID int           `db:"created_by"  json:"created_by_id" gorm:"not null"`
-	Name        string        `db:"name"        json:"name"          gorm:"type:varchar(100); not null"`
-	Description null.String   `db:"description" json:"description"   gorm:"type:varchar(255)"`
-	Code        null.String   `db:"code"        json:"code"          gorm:"code:varchar(10)"`
-	Image       null.String   `db:"image"       json:"image"         gorm:"type:varchar(100)"`
-	MinScore    int           `db:"min_score"   json:"min_score"     gorm:"type:int; not null"`
-	MaxScore    int           `db:"max_score"   json:"max_score"     gorm:"type:int; not null"`
-	Locked      bool          `db:"locked"      json:"locked"        gorm:"type:tinyint(1); default 0"`
-	Competitors []*Competitor `db:"-"           json:"competitors"   gorm:"many2many:competition_competitor"`
-	Bets        []*Bet        `db:"-"           json:"bets"`
+	ID          int                 `db:"id"          json:"id"            gorm:"primary_key"`
+	CreatedAt   time.Time           `db:"created_at"  json:"created_at"`
+	UpdatedAt   time.Time           `db:"updated_at"  json:"updated_at"`
+	DeletedAt   null.Time           `db:"deleted_at"  json:"deleted_at"`
+	CreatedBy   *Better             `db:"-"           json:"created_by"    gorm:"foreignkey:CreatedByID"`
+	CreatedByID int                 `db:"created_by"  json:"created_by_id" gorm:"not null"`
+	Name        string              `db:"name"        json:"name"          gorm:"type:varchar(100); not null"`
+	Description null.String         `db:"description" json:"description"   gorm:"type:varchar(255)"`
+	Code        null.String         `db:"code"        json:"code"          gorm:"code:varchar(10)"`
+	Image       null.String         `db:"image"       json:"image"         gorm:"type:varchar(100)"`
+	MinScore    int                 `db:"min_score"   json:"min_score"     gorm:"type:int; not null"`
+	MaxScore    int                 `db:"max_score"   json:"max_score"     gorm:"type:int; not null"`
+	Locked      bool                `db:"locked"      json:"locked"        gorm:"type:tinyint(1); default 0"`
+	Metrics     *CompetitionMetrics `db:"-"           json:"metrics"       gorm:"-"`
+	Competitors []*Competitor       `db:"-"           json:"competitors"   gorm:"many2many:competition_competitor"`
+	Bets        []*Bet              `db:"-"           json:"bets"`
 }
 
 // Competitor represents a team or player competing in a competition. A

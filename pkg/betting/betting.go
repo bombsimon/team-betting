@@ -22,6 +22,7 @@ func (s *Service) AddCompetition(ctx context.Context, competition *pkg.Competiti
 	}
 
 	cleaned := pkg.Competition{
+		CreatedByID: competition.CreatedByID,
 		Name:        competition.Name,
 		Description: competition.Description,
 		Image:       competition.Image,
@@ -47,6 +48,7 @@ func (s *Service) AddCompetitor(ctx context.Context, competitor *pkg.Competitor,
 	}
 
 	cleaned := pkg.Competitor{
+		CreatedByID: competitor.CreatedByID,
 		Name:        competitor.Name,
 		Description: competitor.Description,
 		Image:       competitor.Image,
@@ -182,6 +184,14 @@ func (s *Service) GetCompetitions(ctx context.Context, competitionIDs []int) ([]
 
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get competition")
+	}
+
+	for _, c := range competitions {
+		if c.Locked {
+			if metrics, err := s.GetCompetitionMetrics(ctx, c.ID); err != nil {
+				c.Metrics = metrics
+			}
+		}
 	}
 
 	return competitions, nil
@@ -358,4 +368,28 @@ func (s *Service) GetBetsForCompetition(ctx context.Context, competitionID int) 
 	}
 
 	return bets, nil
+}
+
+// GetCreatedObjectsForBetter returns created competitions, competitors and
+// bets created by a given user.
+func (s *Service) GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*pkg.Competition, []*pkg.Competitor, []*pkg.Bet, error) {
+	var (
+		competitions []*pkg.Competition
+		competitors  []*pkg.Competitor
+		bets         []*pkg.Bet
+	)
+
+	if err := s.DB.Gorm.Where("created_by_id = ?", id).Find(&competitions).Error; err != nil {
+		return nil, nil, nil, errors.Wrap(err, "could not get competitions for better")
+	}
+
+	if err := s.DB.Gorm.Where("created_by_id = ?", id).Find(&competitors).Error; err != nil {
+		return nil, nil, nil, errors.Wrap(err, "could not get competitors for better")
+	}
+
+	if err := s.DB.Gorm.Where("better_id = ?", id).Find(&bets).Error; err != nil {
+		return nil, nil, nil, errors.Wrap(err, "could not get bets for better")
+	}
+
+	return competitions, competitors, bets, nil
 }
