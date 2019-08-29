@@ -58,6 +58,8 @@ func testAddData(db *gorm.DB) {
 		Name:        "Eurovision Song Contest 2020",
 		Description: null.StringFrom("The one that started it all"),
 		CreatedBy:   betters[0],
+		MinScore:    0,
+		MaxScore:    10,
 	}
 
 	competitors := []*pkg.Competitor{
