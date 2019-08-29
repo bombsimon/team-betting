@@ -28,23 +28,7 @@ let $table = $('#table');
 $(document).ready(function() {
   $.getJSON("http://" + window.location.host + "/competition", function(r) {
     chat.innerText = now() + " " + JSON.stringify(r, null, 2) + "\n" + chat.innerText;
-
-    var d = []
-    for (i = 0; i < r.length; i++) {
-      d.push({
-        id: r[i].id,
-        name: r[i].name,
-        description: r[i].description,
-        competitors: r[i].competitors.length
-      });
-    }
-
-    $table.bootstrapTable({
-      data: d,
-    });
   });
 });
-
-
 
 // vim: set ts=2 sw=2 et:

@@ -54,10 +54,6 @@ func main() {
 		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")
 	})
 
-	router.GET("/chat", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "./cmd/betting/chat.html")
-	})
-
 	router.GET("/ws", func(c *gin.Context) {
 		if err := wsManager.HandleRequest(c.Writer, c.Request); err != nil {
 			logger.Printf("could not handle WS request: %s", err.Error())
