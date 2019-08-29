@@ -48,8 +48,14 @@ func main() {
 	router.GET("/bet/:id", httpService.GetBets)
 	router.DELETE("/bet/:id", httpService.DeleteBet)
 
-	router.GET("/test", func(c *gin.Context) {
+	router.Static("/assets", "./cmd/betting/assets")
+
+	router.GET("/", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "./cmd/betting/index.html")
+	})
+
+	router.GET("/chat", func(c *gin.Context) {
+		http.ServeFile(c.Writer, c.Request, "./cmd/betting/chat.html")
 	})
 
 	router.GET("/ws", func(c *gin.Context) {
