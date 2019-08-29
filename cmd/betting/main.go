@@ -8,6 +8,7 @@ import (
 	"github.com/bombsimon/team-betting/pkg/betting"
 	"github.com/bombsimon/team-betting/pkg/database"
 	bhttp "github.com/bombsimon/team-betting/pkg/http"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/olahol/melody.v1"
 )
@@ -68,6 +69,7 @@ func main() {
 		}
 	})
 
+	router.Use(cors.Default())
 	if err := router.Run(":5000"); err != nil {
 		panic(err)
 	}
