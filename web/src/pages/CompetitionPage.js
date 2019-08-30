@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+
+import { Competition } from '../Competition'
+import HttpService from '../HttpClient'
 
 export default function CompetitionPage(props) {
   const initialCompetitionState = {
@@ -11,39 +13,19 @@ export default function CompetitionPage(props) {
 
   useEffect(() => {
     const getCompetition = async () => {
-      let apiResult = null;
-
-      try {
-        const { data } = await axios(`http://localhost:5000/competition/${props.match.params.code}`)
-
-        apiResult = data
-      } catch (err) {
-        apiResult = err.response;
-      } finally {
-        console.log(apiResult)
-      }
+      const apiResult = await HttpService.GetCompetition(props.match.params.code)
 
       setCompetition(apiResult)
     }
 
-    // Invoke the async function if competition not passed.
-    const passedCompetition = props.location.state
-    if ( passedCompetition === undefined ) {
-      getCompetition()
-    }
-    else {
-      setCompetition(passedCompetition.competition)
-    }
-  }, [props.location.state, props.match.params.code]) // Don't forget the `[]`, which will prevent useEffect from running in an infinite loop
+    getCompetition()
+   }, [props.match.params.code])
+
 
   return competition.loading ? (
       <div>Loading...</div>
   ) : (
-      <div className="container">
-          <h1>{competition.name}</h1>
-          <p>{competition.description}</p>
-          <small>{competition.status} {competition.statusText}</small>
-      </div>
+      <Competition data={competition} />
   )
 }
 
