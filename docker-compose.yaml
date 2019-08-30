@@ -21,12 +21,12 @@ services:
       timeout: 20s
       retries: 10
 
-  betting:
-    container_name: team-betting
+  backend:
+    container_name: backend
     build:
       context: .
       dockerfile: Dockerfile
-    image: team-betting
+    image: ccbb-backend
     ports:
       - "5000:5000"
     tty:
@@ -35,3 +35,16 @@ services:
       - mysql
     depends_on:
       - mysql
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: ccbb-frontend
+    ports:
+      - "3000:3000"
+    tty:
+      true
+    links:
+      - backend

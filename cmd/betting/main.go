@@ -29,6 +29,8 @@ func main() {
 		}
 	)
 
+	router.Use(cors.Default())
+
 	router.GET("/competition", httpService.GetCompetitions)
 	router.POST("/competition", httpService.AddCompetition)
 	router.GET("/competition/:id", httpService.GetCompetition)
@@ -69,7 +71,6 @@ func main() {
 		}
 	})
 
-	router.Use(cors.Default())
 	if err := router.Run(":5000"); err != nil {
 		panic(err)
 	}
