@@ -1,9 +1,22 @@
 import React from "react";
 import { Link } from 'react-router-dom'
 
-export function Competition(props) {
-  const { data } = props
+import Generic from './Generic'
 
+export function AddCompetition({ onSubmit, onChange }) {
+  return (
+    <form onSubmit={onSubmit}>
+      <Generic.FormGroupInput id="name" name="Name" onChange={onChange} />
+      <Generic.FormGroupInput id="description" name="Description" onChange={onChange} />
+      <Generic.FormGroupInput id="min_score" name="Minimum score" onChange={onChange} />
+      <Generic.FormGroupInput id="max_score" name="Maximum score" onChange={onChange} />
+
+      <button>Add</button>
+    </form>
+  )
+}
+
+export function Competition({ data }) {
   const fields = [
     'name', 'description', 'code',
     'created_at', 'updated_at',
@@ -50,7 +63,7 @@ export function CompetitionLink(props) {
 }
 
 const CompetitionData = {
-  Competition, CompetitionLink
+  Competition, CompetitionLink, AddCompetition
 }
 
 export default CompetitionData;
