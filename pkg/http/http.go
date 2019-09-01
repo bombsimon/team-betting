@@ -74,14 +74,17 @@ func (s *Service) GetCompetitor(c *gin.Context) {
 
 // AddCompetitor adds a competitor.
 func (s *Service) AddCompetitor(c *gin.Context) {
-	var competitor pkg.Competitor
+	var in struct {
+		pkg.Competitor
+		CompetitionID *int `json:"competition_id"`
+	}
 
-	if err := c.ShouldBindJSON(&competitor); err != nil {
+	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	data, err := s.Betting.AddCompetitor(context.Background(), &competitor, nil)
+	data, err := s.Betting.AddCompetitor(context.Background(), &in.Competitor, in.CompetitionID)
 
 	s.HandleResponse(c, nil, data, err)
 }
@@ -183,7 +186,7 @@ func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response inte
 		var httpStatus = http.StatusInternalServerError
 
 		if errors.Cause(err) == pkg.ErrNotFound {
-			c.JSON(http.StatusNotFound, nil)
+			c.JSON(http.StatusNotFound, err.Error())
 			return
 		}
 
