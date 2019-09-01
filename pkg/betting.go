@@ -127,9 +127,9 @@ type Bet struct {
 	Placing       null.Int     `db:"placing"                   json:"placing"                gorm:"type:int"`
 	Note          null.String  `db:"note"                      json:"note"                   gorm:"type:varchar(255)"`
 	Better        *Better      `db:"-"                         json:"better"`
-	BetterID      int          `db:"better_id"                 json:"id_better"              gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
+	BetterID      int          `db:"better_id"                 json:"better_id"              gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
 	Competition   *Competition `db:"-"                         json:"competition"`
-	CompetitionID int          `db:"competition_id"            json:"id_competition"         gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
+	CompetitionID int          `db:"competition_id"            json:"competition_id"         gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
 	Competitor    *Competitor  `db:"-"                         json:"competitor"`
-	CompetitorID  int          `db:"competitor_id"             json:"id_competitor"          gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
+	CompetitorID  int          `db:"competitor_id"             json:"competitor_id"          gorm:"unique_index:idx_better_id_competition_id_competitor_id; not null"`
 }

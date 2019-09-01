@@ -46,9 +46,9 @@ func main() {
 	router.GET("/better/:id", httpService.GetBetter)
 	router.DELETE("/better/:id", httpService.DeleteBetter)
 
-	router.GET("/bet", httpService.GetBet)
+	router.GET("/bet", httpService.GetBets)
 	router.PUT("/bet", httpService.AddBet)
-	router.GET("/bet/:id", httpService.GetBets)
+	router.GET("/bet/:id", httpService.GetBet)
 	router.DELETE("/bet/:id", httpService.DeleteBet)
 
 	router.Static("/assets", "./cmd/betting/assets")

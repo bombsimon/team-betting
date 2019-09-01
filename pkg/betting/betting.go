@@ -97,12 +97,16 @@ func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (*pkg.Bette
 
 // AddBet will add a bet for a better to a competitor in a competition.
 func (s *Service) AddBet(ctx context.Context, bet *pkg.Bet) (*pkg.Bet, error) {
-	competition, err := s.GetCompetition(ctx, bet.CompetitionID)
-	if err != nil {
-		return nil, err
+	if err := bet.ValidateInit(); err != nil {
+		return nil, errors.Wrap(err, "bad request")
 	}
 
-	if err := bet.Validate(competition.MinScore, competition.MaxScore); err != nil {
+	competition, err := s.GetCompetition(ctx, bet.CompetitionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not find competition to add bet to")
+	}
+
+	if err := bet.Validate(competition.MinScore, competition.MaxScore, len(competition.Competitors)); err != nil {
 		return nil, errors.Wrap(err, "bad request")
 	}
 

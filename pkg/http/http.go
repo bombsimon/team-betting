@@ -8,6 +8,7 @@ import (
 
 	"github.com/bombsimon/team-betting/pkg"
 	"github.com/gin-gonic/gin"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
 	"gopkg.in/olahol/melody.v1"
 )
@@ -179,12 +180,18 @@ func (s *Service) DeleteBet(c *gin.Context) {
 // HandleResponse will respond according to the object and error passed.
 func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response interface{}, err error) {
 	if err != nil {
+		var httpStatus = http.StatusInternalServerError
+
 		if errors.Cause(err) == pkg.ErrNotFound {
 			c.JSON(http.StatusNotFound, nil)
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if _, ok := errors.Cause(err).(validation.Errors); ok {
+			httpStatus = http.StatusBadRequest
+		}
+
+		c.JSON(httpStatus, gin.H{"error": err.Error()})
 
 		return
 	}
