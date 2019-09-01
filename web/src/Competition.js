@@ -11,13 +11,12 @@ export function AddCompetition({ onSubmit, onChange }) {
       <Generic.FormGroupInput id="min_score" name="Minimum score" onChange={onChange} />
       <Generic.FormGroupInput id="max_score" name="Maximum score" onChange={onChange} />
 
-      <button>Add</button>
+      <button className="btn btn-lg btn-primary">Add</button>
     </form>
   )
 }
 
-export function Competition({ data }) {
-  const fields = [
+export function Competition({ data }) { const fields = [
     'name', 'description', 'code',
     'created_at', 'updated_at',
     'min_score', 'max_score'
@@ -32,8 +31,7 @@ export function Competition({ data }) {
 
   return (
     <div>
-      <h1>{data.name}</h1>
-      <table style={{width: '100%'}}>
+      <table className="table">
         <thead>
           <tr>
             <th>Key</th>

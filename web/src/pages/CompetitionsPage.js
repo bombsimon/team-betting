@@ -4,7 +4,7 @@ import HttpService from '../HttpClient'
 import { AddCompetition, CompetitionLink } from '../Competition'
 
 
-export default function HomePage() {
+export default function CompetitionsPage() {
   const initialCompetitionsState = {
     competitions: {},
     competitionToAdd: {
@@ -85,6 +85,9 @@ export default function HomePage() {
   ) : (
     <div className="container">
       <AddCompetition onSubmit={onSubmit} onChange={handleInputChange}/>
+
+      <hr />
+
       {competitions.competitions.map((competition) =>
         <CompetitionLink key={competition.id} competition={competition} />
       )}
