@@ -1,80 +1,79 @@
 import React, { useState } from "react";
 
-import Generic from './Generic'
-import HttpService from './HttpClient'
+import Generic from "./Generic";
+import HttpService from "./HttpClient";
 
-export function SaveBetter({ better }) {
-  let initialBetterState = {
-    better: {
-      name: '',
-      email: '',
-      image: '',
-      confirmed: false,
-    },
-    btnDisabled: true,
-  }
+export function SaveBetter({ current }) {
+  const initialBetterState = {
+    name: current === undefined ? "" : current.name,
+    email: current === undefined ? "" : current.email,
+    image: current === undefined ? "" : current.image,
+    confirmed: current === undefined ? false : current.confirmed
+  };
 
-  if (better !== undefined) {
-    initialBetterState = better
-  }
+  const initialButtonState = {
+    label: current === undefined ? "Add" : "Update",
+    disabled: true
+  };
 
-  const [state, setState] = useState(initialBetterState)
+  const [better, setBetter] = useState(initialBetterState);
+  const [button, setButton] = useState(initialButtonState);
 
   const onSubmit = event => {
-    event.preventDefault()
-
-    ;(async () => {
+    event.preventDefault();
+    (async () => {
       const apiResult = await HttpService.Request({
-        method: 'post',
-        url: '/better',
-        data: state.better
-      })
+        method: "post",
+        url: "/better",
+        data: better
+      });
 
       if (apiResult !== undefined) {
-        setState(state => ({
-          ...state,
-          better: apiResult
-        }))
+        setBetter(initialBetterState);
       }
     })();
-  }
+  };
 
   const handleInputChange = event => {
-    const { name, value } = event.target
+    const { name, value } = event.target;
 
-    setState(state => ({
+    // Assume valid - set button to true.
+    Generic.SetBoolKey(setButton, "disabled", false);
+
+    setBetter(state => ({
       ...state,
-      btnDisabled: false,
-      better: {
-        ...state.better,
-        [name]: value,
-      }
-    }))
-  }
+      [name]: value
+    }));
+  };
 
   const handleImageClick = event => {
-    const { alt } = event.target
+    const { alt } = event.target;
 
-    setState(state => ({
+    setBetter(state => ({
       ...state,
-        better: {
-          ...state.better,
-          image: alt
-        }
-    }))
-  }
+      image: alt
+    }));
+  };
 
-  const images = []
+  const images = [];
   for (let i = 1; i <= 5; i++) {
-    const filename = `avatar${i}.png`
+    const filename = `avatar${i}.png`;
     const imgStyle = {
-      cursor: 'pointer',
-      width: '64px',
-      padding: '10px',
-      border: (filename === state.better.image ? '2px solid black' : '' )
-    }
+      cursor: "pointer",
+      width: "64px",
+      padding: "10px",
+      border: filename === better.image ? "2px solid black" : ""
+    };
 
-    images.push(<img key={filename} alt={filename} src={'avatar/' + filename} style={imgStyle} onClick={handleImageClick} />)
+    images.push(
+      <img
+        key={filename}
+        alt={filename}
+        src={"avatar/" + filename}
+        style={imgStyle}
+        onClick={handleImageClick}
+      />
+    );
   }
 
   return (
@@ -82,50 +81,50 @@ export function SaveBetter({ better }) {
       <Generic.FormGroupInput
         id="name"
         name="Name"
-        value={state.better.name}
+        value={better.name}
         onChange={handleInputChange}
       />
 
       <Generic.FormGroupInput
         id="email"
         name="Email"
-        value={state.better.email}
+        value={better.email}
         onChange={handleInputChange}
       />
 
-      <div className="form-group">
-        {images}
-      </div>
+      <div className="form-group">{images}</div>
 
       <button
-        className={"btn btn-lg btn-primary" + (state.btnDisabled ? " disabled" : "")}
+        className={
+          "btn btn-lg btn-primary" + (button.disabled ? " disabled" : "")
+        }
       >
-        {better === undefined ? 'Add' : 'Update'}
+        {better === undefined ? "Add" : "Update"}
       </button>
     </form>
-  )
+  );
 }
 
 export function SendLoginEmail() {
   return (
     <div>
       <h1>Been here before?</h1>
-      <p className="lead">Just write your e-mail and we'll send you a sign in link!</p>
+      <p className="lead">
+        Just write your e-mail and we'll send you a sign in link!
+      </p>
       <form>
-        <Generic.FormGroupInput
-          id="email"
-          name="Email"
-        />
+        <Generic.FormGroupInput id="email" name="Email" />
 
         <button className="btn btn-lg btn-primary">Send!</button>
       </form>
     </div>
-  )
+  );
 }
 
 const BetterService = {
-  SendLoginEmail, SaveBetter
-}
+  SendLoginEmail,
+  SaveBetter
+};
 
 export default BetterService;
 

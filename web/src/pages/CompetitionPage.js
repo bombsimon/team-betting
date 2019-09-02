@@ -6,42 +6,54 @@ import { Bet } from '../Bet'
 import HttpService from '../HttpClient'
 
 export default function CompetitionPage(props) {
-  const initialCompetitionState = {
-    competition: {},
-    betsPerCompetitor: {},
-    loading: true,
-  }
-
-  const [state, setCompetition] = useState(initialCompetitionState)
+  const [state, setCompetition] = useState({ competition: {}, loading: true })
+  const [betsPerCompetitor, setBetsPerCompetitor] = useState({})
 
   useEffect(() => {
     const getCompetition = async () => {
       const apiResult = await HttpService.GetCompetition(props.match.params.code)
 
+      setCompetition(state => ({
+        ...state,
+        competition: apiResult
+      }))
+
+      // TODO: This should either be a list of everyones bets or just the
+      // current users bet, although there's no user state implemented yet.
       let bpc = {}
       apiResult.bets.map((item, key) =>
         bpc[item.competitor.id] = item
       )
 
-      setCompetition(state => ({
-        ...state,
-        competition: apiResult,
-        betsPerCompetitor: bpc,
-        loading: false
-      }))
+      setBetsPerCompetitor(bpc)
+
+      setLoading(false)
     }
 
     getCompetition()
    }, [props.match.params.code])
 
-  const updateCompetitors = competitor => {
-    let { competition }  = state
-
-    competition.competitors = [...competition.competitors, competitor]
-
+  const setLoading = bool => {
     setCompetition(state => ({
       ...state,
-      competition: competition,
+      loading: bool
+    }))
+  }
+
+  const updateCompetitors = competitor => {
+    setCompetition(state => ({
+      ...state,
+      competition: {
+        ...state.competition,
+        competitors: [...state.competition.competitors, competitor]
+      }
+    }))
+  }
+
+  const updateBetPerCompetitor = bet => {
+    setBetsPerCompetitor(state => ({
+      ...betsPerCompetitor,
+      [bet.competitor_id]: bet
     }))
   }
 
@@ -49,32 +61,35 @@ export default function CompetitionPage(props) {
       <div>Loading...</div>
   ) : (
     <div className="container">
-      <h1>The competition</h1>
-      <Competition data={state.competition} />
+      <Competition competition={state.competition} />
       <hr />
 
-      <h1>All competitors</h1>
       <AddCompetitor
         competitionId={state.competition.id}
-        onCompetitorAdded={updateCompetitors}
+        onAddedCompetitor={updateCompetitors}
       />
       <hr />
 
+      <h1>Competitors for competition</h1>
       {state.competition.competitors.map((competitor) =>
-        <div key={competitor.id} style={{display: 'flex'}}>
-          <div style={{flex: '50%', paddingRight: '20px'}}>
+        <div
+          key={competitor.id} 
+          style={{
+            display: 'flex',
+            borderBottom: '1px solid #ccc',
+            padding: '20px'
+          }}
+        >
+          <div style={{float: 'left', flex: '50%'}}>
             <Competitor competitor={competitor} />
           </div>
           <div style={{flex: '50%'}}>
-            <h1>My bet</h1>
             <Bet
-              competitionId={state.competition.id}
               competitorId={competitor.id}
-              betData={state.betsPerCompetitor[competitor.id]}
-              minScore={state.competition.min_score}
-              maxScore={state.competition.max_score}
-              maxPos={state.competition.competitors.length}
-              selectInputs={true}
+              competition={state.competition}
+              bets={betsPerCompetitor[competitor.id]}
+              onAddedBet={updateBetPerCompetitor} 
+              selectInputs={false}
             />
           </div>
         </div>

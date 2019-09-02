@@ -1,67 +1,113 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from 'react-router-dom'
 
 import Generic from './Generic'
+import HttpService from './HttpClient'
 
-export function AddCompetition({ onSubmit, onChange }) {
+export function AddCompetition(props) {
+  const initialState = {
+    created_by_id: 1, // TODO: Get from JWT/localStore
+    name: '',
+    description: '',
+    min_score: '',
+    max_score: ''
+  }
+
+  const [competition, setCompetition] = useState(initialState)
+
+  const handleInputChange = event => {
+    const { name, value } =  event.target
+    let finalValue = value;
+
+    if (['min_score', 'max_score'].includes(name)) {
+      if (Number.isNaN(Number(value))) {
+        finalValue = competition[name]
+      }
+      else if(value === "") {
+        finalValue = ""
+      }
+      else {
+        finalValue = Number(value)
+      }
+    }
+
+    setCompetition(state => ({
+      ...state,
+      [name]: finalValue
+    }))
+  }
+
+  const onSubmit = event => {
+    event.preventDefault()
+
+    const request = {
+      ...competition,
+      min_score: competition.min_score === "" ? null : competition.min_score,
+      max_score: competition.max_score === "" ? null : competition.max_score
+    }
+
+    ;(async () => {
+      const apiResult = await HttpService.Request({
+        method: 'post',
+        url: '/competition',
+        data: request
+      })
+
+      if (apiResult !== undefined && apiResult.error === undefined) {
+        props.onAddedCompetition(apiResult)
+      }
+    })();
+
+    setCompetition(initialState)
+  }
+
   return (
     <form onSubmit={onSubmit}>
-      <Generic.FormGroupInput id="name" name="Name" onChange={onChange} />
-      <Generic.FormGroupInput id="description" name="Description" onChange={onChange} />
-      <Generic.FormGroupInput id="min_score" name="Minimum score" onChange={onChange} />
-      <Generic.FormGroupInput id="max_score" name="Maximum score" onChange={onChange} />
+      <Generic.FormGroupInput value={competition.name} id="name" name="Name" onChange={handleInputChange} />
+      <Generic.FormGroupInput value={competition.description} id="description" name="Description" onChange={handleInputChange} />
+      <Generic.FormGroupInput value={competition.min_score} id="min_score" name="Minimum score" onChange={handleInputChange} />
+      <Generic.FormGroupInput value={competition.max_score} id="max_score" name="Maximum score" onChange={handleInputChange} />
 
       <button className="btn btn-lg btn-primary">Add</button>
     </form>
   )
 }
 
-export function Competition({ data }) { const fields = [
-    'name', 'description', 'code',
-    'created_at', 'updated_at',
-    'min_score', 'max_score'
-  ]
-
-  const tableBody = fields.map((key) =>
-    <tr key={key}>
-      <td>{key}</td>
-      <td>{data[key]}</td>
-    </tr>
-  );
-
+export function Competition({ competition }) {
   return (
     <div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Key</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableBody}
-        </tbody>
-      </table>
+      <h1>{competition.name}</h1>
+      <p className="lead">{competition.description}</p>
+      <Generic.SmallDate date={competition.created_at} />
     </div>
   )
 }
 
-export function CompetitionLink(props) {
+export function CompetitionLink({ competition }) {
   return (
     <div>
-      <Link
-        key="{i}"
-        to={"/" + props.competition.id}
-      >
-        <h1>{props.competition.name}</h1>
+      <Link to={"/" + competition.id} >
+        <h1>{competition.name}</h1>
       </Link>
-      <p>{props.competition.description}</p>
+      <p>{competition.description}</p>
+    </div>
+  )
+}
+
+export function Competitions({ competitions }) {
+  return (
+    <div>
+      {competitions.map((competition) =>
+        <CompetitionLink key={competition.id} competition={competition} />
+      )}
     </div>
   )
 }
 
 const CompetitionData = {
-  Competition, CompetitionLink, AddCompetition
+  AddCompetition,
+  Competition, CompetitionLink,
+  Competitions
 }
 
 export default CompetitionData;

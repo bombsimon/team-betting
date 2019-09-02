@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 import { SendLoginEmail, SaveBetter } from '../Better'
 
@@ -13,7 +14,7 @@ export default function RegisterPage() {
       <SendLoginEmail />
 
       <hr />
-      <a href="/list"><h1>Show competitions</h1></a>
+      <Link to="/list"><h1>Show competitions</h1></Link>
     </div>
   )
 }

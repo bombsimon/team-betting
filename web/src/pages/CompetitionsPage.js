@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react'
 
 import HttpService from '../HttpClient'
-import { AddCompetition, CompetitionLink } from '../Competition'
+import { AddCompetition, Competitions } from '../Competition'
 
 
 export default function CompetitionsPage() {
-  const initialCompetitionsState = {
-    competitions: {},
-    competitionToAdd: {
-      created_by_id: 1,
-      name: '',
-      description: '',
-      min_score: null,
-      max_score: null
-    },
+  const initialState = {
+    competitions: null,
     loading: true,
   }
 
-  const [competitions, setCompetitions] = useState(initialCompetitionsState)
+  const [state, setState] = useState(initialState)
 
   useEffect(() => {
     const getCompetitions = async () => {
@@ -26,7 +19,7 @@ export default function CompetitionsPage() {
         url: '/competition'
       })
 
-      setCompetitions(state => ({
+      setState(state => ({
         ...state,
         competitions: apiResult,
         loading: false
@@ -34,64 +27,24 @@ export default function CompetitionsPage() {
     }
 
     getCompetitions()
-  }, [setCompetitions])
+  }, [setState])
 
-  const handleInputChange = event => {
-    const { name } = event.target
-    let { value } = event.target
-
-    const integers = [
-      'min_score', 'max_score'
-    ]
-
-    if (integers.includes(name)) {
-      if (Number.isNaN(Number(value))) {
-        return
-      }
-
-      value = Number(value)
-    }
-
-    setCompetitions(state => ({
+  const onAddedCompetition = competition => {
+    setState(state => ({
       ...state,
-      competitionToAdd: {
-        ...state.competitionToAdd,
-        [name]: value
-      }
+      competitions: [...state.competitions, competition]
     }))
   }
 
-  const onSubmit = event => {
-    event.preventDefault()
-
-    ;(async () => {
-      const apiResult = await HttpService.Request({
-        method: 'post',
-        url: '/competition',
-        data: competitions.competitionToAdd
-      })
-
-      if (apiResult !== undefined) {
-        setCompetitions(state => ({
-          ...state,
-          competitions: [...state.competitions, apiResult]
-        }))
-      }
-    })();
-  }
-
-  return competitions.loading ? (
+  return state.loading ? (
     <div>Loading...</div>
   ) : (
     <div className="container">
-      <AddCompetition onSubmit={onSubmit} onChange={handleInputChange}/>
+      <AddCompetition onAddedCompetition={onAddedCompetition}/>
 
       <hr />
 
-      {competitions.competitions.map((competition) =>
-        <CompetitionLink key={competition.id} competition={competition} />
-      )}
-      <small>{competitions.status} {competitions.statusText}</small>
+      <Competitions competitions={state.competitions} />
     </div>
   )
 }
