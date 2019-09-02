@@ -8,6 +8,7 @@ import (
 	"github.com/bombsimon/team-betting/pkg/betting"
 	"github.com/bombsimon/team-betting/pkg/database"
 	bhttp "github.com/bombsimon/team-betting/pkg/http"
+	middleware "github.com/bombsimon/team-betting/pkg/http/middlewares"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/olahol/melody.v1"
@@ -30,6 +31,9 @@ func main() {
 	)
 
 	router.Use(cors.Default())
+	router.Use(middleware.AuthJWT(bettingService))
+
+	router.GET("/email/sign_in", httpService.SignInEmail)
 
 	router.GET("/competition", httpService.GetCompetitions)
 	router.POST("/competition", httpService.AddCompetition)

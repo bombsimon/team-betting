@@ -48,6 +48,10 @@ type BettingService interface {
 	GetCompetitorsForCompetition(ctx context.Context, id int) ([]*Competitor, error)
 	GetBetsForCompetition(ctx context.Context, id int) ([]*Bet, error)
 	GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*Competition, []*Competitor, []*Bet, error)
+
+	SignInFromEmail(ctx context.Context, email, hash string) (string, error)
+	JWTForBetter(ctx context.Context, better *Better) (string, error)
+	BetterFromJWT(ctx context.Context, tokenString string) (*Better, error)
 }
 
 // MetricValue represents who has what value, e.g. who has the lowest average

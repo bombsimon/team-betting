@@ -19,6 +19,24 @@ type Service struct {
 	WS      *melody.Melody
 }
 
+// SignInEmail will sign in from mail.
+func (s *Service) SignInEmail(c *gin.Context) {
+	var (
+		email = c.Query("email")
+		hash  = c.Query("hash")
+		data  map[string]string
+	)
+
+	jwtString, err := s.Betting.SignInFromEmail(context.Background(), email, hash)
+	if err == nil {
+		data = map[string]string{
+			"jwt": jwtString,
+		}
+	}
+
+	s.HandleResponse(c, nil, data, err)
+}
+
 // GetCompetitions returns all competitions.
 func (s *Service) GetCompetitions(c *gin.Context) {
 	data, err := s.Betting.GetCompetitions(context.Background(), []int{})
@@ -40,6 +58,11 @@ func (s *Service) AddCompetition(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&competition); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := isCreator(c, competition.CreatedByID); err != nil {
+		s.HandleResponse(c, nil, nil, err)
 		return
 	}
 
@@ -180,6 +203,24 @@ func (s *Service) DeleteBet(c *gin.Context) {
 	s.HandleResponse(c, nil, nil, err)
 }
 
+func isCreator(c *gin.Context, creatorID int) error {
+	b, ok := c.Get("better")
+	if !ok {
+		return errors.Wrap(pkg.ErrBadRequest, "no or invalid authorization header")
+	}
+
+	better, ok := b.(*pkg.Better)
+	if !ok {
+		return errors.Wrap(pkg.ErrBadRequest, "authorization isn't a better")
+	}
+
+	if better.ID != creatorID {
+		return errors.Wrap(pkg.ErrBadRequest, "creator is not signed in user")
+	}
+
+	return nil
+}
+
 // HandleResponse will respond according to the object and error passed.
 func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response interface{}, err error) {
 	if err != nil {
@@ -188,6 +229,10 @@ func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response inte
 		if errors.Cause(err) == pkg.ErrNotFound {
 			c.JSON(http.StatusNotFound, err.Error())
 			return
+		}
+
+		if errors.Cause(err) == pkg.ErrBadRequest {
+			httpStatus = http.StatusBadRequest
 		}
 
 		if _, ok := errors.Cause(err).(validation.Errors); ok {
