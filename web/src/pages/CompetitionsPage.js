@@ -1,52 +1,51 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 
-import HttpService from '../HttpClient'
-import { AddCompetition, Competitions } from '../Competition'
-
+import HttpService from "../HttpClient";
+import { AddCompetition, Competitions } from "../Competition";
 
 export default function CompetitionsPage() {
   const initialState = {
     competitions: null,
-    loading: true,
-  }
+    loading: true
+  };
 
-  const [state, setState] = useState(initialState)
+  const [state, setState] = useState(initialState);
 
   useEffect(() => {
     const getCompetitions = async () => {
       const apiResult = await HttpService.Request({
-        method: 'get',
-        url: '/competition'
-      })
+        method: "get",
+        url: "/competition"
+      });
 
       setState(state => ({
         ...state,
         competitions: apiResult,
         loading: false
-      }))
-    }
+      }));
+    };
 
-    getCompetitions()
-  }, [setState])
+    getCompetitions();
+  }, [setState]);
 
   const onAddedCompetition = competition => {
     setState(state => ({
       ...state,
       competitions: [...state.competitions, competition]
-    }))
-  }
+    }));
+  };
 
   return state.loading ? (
     <div>Loading...</div>
   ) : (
     <div className="container">
-      <AddCompetition onAddedCompetition={onAddedCompetition}/>
+      <AddCompetition onAddedCompetition={onAddedCompetition} />
 
       <hr />
 
       <Competitions competitions={state.competitions} />
     </div>
-  )
+  );
 }
 
 // vim: set ts=2 sw=2 et:

@@ -1,56 +1,65 @@
 import React, { useState } from "react";
 
-import Generic from './Generic'
-import HttpService from './HttpClient'
+import Generic from "./Generic";
+import HttpService from "./HttpClient";
 
 export function AddCompetitor({ competitionId, onAddedCompetitor }) {
   const initialCompetitorState = {
     created_by_id: 1,
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     competition_id: competitionId
-  }
+  };
 
-  const [competitor, setCompetitor] = useState(initialCompetitorState)
+  const [competitor, setCompetitor] = useState(initialCompetitorState);
 
   const handleInputChange = event => {
-    const { name, value } = event.target
+    const { name, value } = event.target;
 
     setCompetitor(state => ({
       ...state,
       [name]: value
-    }))
-  }
+    }));
+  };
 
   const onSubmit = event => {
-    event.preventDefault()
-
-    ;(async () => {
+    event.preventDefault();
+    (async () => {
       const apiResult = await HttpService.Request({
-        method: 'post',
-        url: '/competitor',
-        data: competitor,
-      })
+        method: "post",
+        url: "/competitor",
+        data: competitor
+      });
 
       if (apiResult !== undefined) {
-        onAddedCompetitor(apiResult)
+        onAddedCompetitor(apiResult);
       }
     })();
 
-    setCompetitor(initialCompetitorState)
-  }
+    setCompetitor(initialCompetitorState);
+  };
 
   return (
     <div>
       <h1>Add competitor to competition</h1>
       <form onSubmit={onSubmit}>
-        <Generic.FormGroupInput value={competitor.name} id="name" name="Name" onChange={handleInputChange} />
-        <Generic.FormGroupInput value={competitor.description} id="description" name="Description" onChange={handleInputChange} />
+        <Generic.FormGroupInput
+          value={competitor.name}
+          id="name"
+          name="Name"
+          onChange={handleInputChange}
+        />
+        <Generic.FormGroupInput
+          value={competitor.description}
+          id="description"
+          name="Description"
+          onChange={handleInputChange}
+        />
 
         <button className="btn btn-lg btn-primary">Add</button>
       </form>
     </div>
-  )
+  );
 }
 
 export function Competitor({ competitor, bet }) {
@@ -60,12 +69,13 @@ export function Competitor({ competitor, bet }) {
       <p className="lead">{competitor.description}</p>
       <Generic.SmallDate date={competitor.created_at} />
     </div>
-  )
+  );
 }
 
 const CompetitorData = {
-    AddCompetitor, Competitor
-}
+  AddCompetitor,
+  Competitor
+};
 
 export default CompetitorData;
 

@@ -11,6 +11,8 @@ export function SaveBetter({ current }) {
     confirmed: current === undefined ? false : current.confirmed
   };
 
+  console.log(current);
+
   const initialButtonState = {
     label: current === undefined ? "Add" : "Update",
     disabled: true
@@ -21,6 +23,11 @@ export function SaveBetter({ current }) {
 
   const onSubmit = event => {
     event.preventDefault();
+
+    if (button.disabled === true) {
+      return;
+    }
+
     (async () => {
       const apiResult = await HttpService.Request({
         method: "post",
@@ -99,21 +106,41 @@ export function SaveBetter({ current }) {
           "btn btn-lg btn-primary" + (button.disabled ? " disabled" : "")
         }
       >
-        {better === undefined ? "Add" : "Update"}
+        {button.label}
       </button>
     </form>
   );
 }
 
 export function SendLoginEmail() {
+  const [email, setEmail] = useState("");
+
+  const handleInputChange = event => {
+    const { value } = event.target;
+
+    setEmail(value);
+  };
+
+  const onSubmit = event => {
+    event.preventDefault();
+
+    if (email === "") {
+      return;
+    }
+  };
+
   return (
     <div>
       <h1>Been here before?</h1>
       <p className="lead">
         Just write your e-mail and we'll send you a sign in link!
       </p>
-      <form>
-        <Generic.FormGroupInput id="email" name="Email" />
+      <form onSubmit={onSubmit}>
+        <Generic.FormGroupInput
+          id="email"
+          name="Email"
+          onChange={handleInputChange}
+        />
 
         <button className="btn btn-lg btn-primary">Send!</button>
       </form>

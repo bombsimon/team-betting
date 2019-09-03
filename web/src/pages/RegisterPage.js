@@ -1,7 +1,7 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from "react";
+import { Link } from "react-router-dom";
 
-import { SendLoginEmail, SaveBetter } from '../Better'
+import { SendLoginEmail, SaveBetter } from "../Better";
 
 export default function RegisterPage() {
   return (
@@ -14,9 +14,11 @@ export default function RegisterPage() {
       <SendLoginEmail />
 
       <hr />
-      <Link to="/list"><h1>Show competitions</h1></Link>
+      <Link to="/list">
+        <h1>Show competitions</h1>
+      </Link>
     </div>
-  )
+  );
 }
 
 // vim: set ts=2 sw=2 et:

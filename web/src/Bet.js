@@ -62,6 +62,11 @@ export function Bet({
 
   const onSubmit = event => {
     event.preventDefault();
+
+    if (button.disabled) {
+      return;
+    }
+
     (async () => {
       const apiResult = await HttpService.Request({
         method: "put",
