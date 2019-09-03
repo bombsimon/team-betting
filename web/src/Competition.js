@@ -86,7 +86,9 @@ export function AddCompetition(props) {
         onChange={handleInputChange}
       />
 
-      <button className="btn btn-lg btn-primary">Add</button>
+      <button type="submit" className="btn btn-lg btn-primary">
+        Add
+      </button>
     </form>
   );
 }
@@ -104,7 +106,7 @@ export function Competition({ competition }) {
 export function CompetitionLink({ competition }) {
   return (
     <div>
-      <Link to={"/" + competition.id}>
+      <Link to={`/${competition.id}`}>
         <h1>{competition.name}</h1>
       </Link>
       <p>{competition.description}</p>

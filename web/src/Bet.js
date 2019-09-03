@@ -1,15 +1,9 @@
 import React, { useState } from "react";
 
-import Generic from "./Generic";
+import { FormGroupInput, FormGroupSelect, SetBoolKey } from "./Generic";
 import HttpService from "./HttpClient";
 
-export function Bet({
-  competitorId,
-  competition,
-  bets,
-  onAddedBet,
-  selectInputs
-}) {
+export function Bet({ competitorId, competition, bets, selectInputs }) {
   const initialBetState = {
     competitor_id: competitorId,
     competition_id: competition.id,
@@ -31,7 +25,7 @@ export function Bet({
     const { name, value } = event.target;
 
     // Assume valid - set button to true.
-    Generic.SetBoolKey(setButton, "disabled", false);
+    SetBoolKey(setButton, "disabled", false);
 
     // Update the state with the new value. If placing or score and not empty,
     // convert to number.
@@ -53,10 +47,8 @@ export function Bet({
       newState.placing < 1 ||
       newState.placing > competition.competitors.length
     ) {
-      console.log(`Invalud value for ${name} - cannot use ${value}`);
-
       // The new data on the state is not valid, disable button again.
-      Generic.SetBoolKey(setButton, "disabled", true);
+      SetBoolKey(setButton, "disabled", true);
     }
   };
 
@@ -93,10 +85,10 @@ export function Bet({
   let numberInputs = null;
 
   if (selectInputs) {
-    let placingOptions = [];
-    let scoreOptions = [];
+    const placingOptions = [];
+    const scoreOptions = [];
 
-    for (var i = 1; i <= competition.competitors.length; i++) {
+    for (let i = 1; i <= competition.competitors.length; i++) {
       placingOptions.push(
         <option key={i} value={i}>
           {i}
@@ -104,7 +96,7 @@ export function Bet({
       );
     }
 
-    for (var j = competition.min_score; j <= competition.max_score; j++) {
+    for (let j = competition.min_score; j <= competition.max_score; j++) {
       scoreOptions.push(
         <option key={j} value={j}>
           {j}
@@ -114,7 +106,7 @@ export function Bet({
 
     numberInputs = (
       <>
-        <Generic.FormGroupSelect
+        <FormGroupSelect
           name="placing"
           label="Placing"
           options={placingOptions}
@@ -122,7 +114,7 @@ export function Bet({
           onChange={handleInputChange}
         />
 
-        <Generic.FormGroupSelect
+        <FormGroupSelect
           name="score"
           label="Score"
           options={scoreOptions}
@@ -134,14 +126,14 @@ export function Bet({
   } else {
     numberInputs = (
       <>
-        <Generic.FormGroupInput
+        <FormGroupInput
           type="number"
           id="placing"
           name="Placing"
           value={bet.placing}
           onChange={handleInputChange}
         />
-        <Generic.FormGroupInput
+        <FormGroupInput
           type="number"
           id="score"
           name="Score"
@@ -155,7 +147,7 @@ export function Bet({
   return (
     <form onSubmit={onSubmit}>
       {numberInputs}
-      <Generic.FormGroupInput
+      <FormGroupInput
         id="note"
         name="Note"
         value={bet.note}
@@ -163,9 +155,10 @@ export function Bet({
       />
 
       <button
-        className={
-          "btn btn-lg btn-primary" + (button.disabled ? " disabled" : "")
-        }
+        type="submit"
+        className={`btn btn-lg btn-primary${
+          button.disabled ? " disabled" : ""
+        }`}
       >
         {button.label}
       </button>

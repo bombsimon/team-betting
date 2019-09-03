@@ -56,13 +56,13 @@ export function AddCompetitor({ competitionId, onAddedCompetitor }) {
           onChange={handleInputChange}
         />
 
-        <button className="btn btn-lg btn-primary">Add</button>
+        <button type="submit" className="btn btn-lg btn-primary">Add</button>
       </form>
     </div>
   );
 }
 
-export function Competitor({ competitor, bet }) {
+export function Competitor({ competitor }) {
   return (
     <div>
       <h2>{competitor.name}</h2>

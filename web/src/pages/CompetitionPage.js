@@ -8,22 +8,35 @@ import HttpService from "../HttpClient";
 export default function CompetitionPage(props) {
   const [state, setCompetition] = useState({ competition: {}, loading: true });
   const [betsPerCompetitor, setBetsPerCompetitor] = useState({});
+  const {
+    match: {
+      params: { code }
+    }
+  } = props;
+
+  const setLoading = bool => {
+    setCompetition(prev => ({
+      ...prev,
+      loading: bool
+    }));
+  };
 
   useEffect(() => {
     const getCompetition = async () => {
-      const apiResult = await HttpService.GetCompetition(
-        props.match.params.code
-      );
+      const apiResult = await HttpService.GetCompetition(code);
 
-      setCompetition(state => ({
-        ...state,
+      setCompetition(prev => ({
+        ...prev,
         competition: apiResult
       }));
 
       // TODO: This should either be a list of everyones bets or just the
       // current users bet, although there's no user state implemented yet.
-      let bpc = {};
-      apiResult.bets.map((item, key) => (bpc[item.competitor.id] = item));
+      const bpc = {};
+      apiResult.bets.map(item => {
+        bpc[item.competitor.id] = item;
+        return item;
+      });
 
       setBetsPerCompetitor(bpc);
 
@@ -31,30 +44,23 @@ export default function CompetitionPage(props) {
     };
 
     getCompetition();
-  }, [props.match.params.code]);
-
-  const setLoading = bool => {
-    setCompetition(state => ({
-      ...state,
-      loading: bool
-    }));
-  };
+  }, [code]);
 
   const updateCompetitors = competitor => {
-    setCompetition(state => ({
-      ...state,
+    setCompetition(prev => ({
+      ...prev,
       competition: {
-        ...state.competition,
-        competitors: [...state.competition.competitors, competitor]
+        ...prev.competition,
+        competitors: [...prev.competition.competitors, competitor]
       }
     }));
   };
 
   const updateBetPerCompetitor = bet => {
-    setBetsPerCompetitor(state => ({
+    setBetsPerCompetitor({
       ...betsPerCompetitor,
       [bet.competitor_id]: bet
-    }));
+    });
   };
 
   return state.loading ? (

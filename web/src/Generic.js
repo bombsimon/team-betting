@@ -10,7 +10,7 @@ export function FormGroupInput({ id, type, name, value, onChange }) {
         className="form-control"
         id={id}
         value={value === null ? "" : value}
-        aria-describedby={name + "Help"}
+        aria-describedby={`${name}Help`}
         placeholder={name}
         onChange={onChange}
       />

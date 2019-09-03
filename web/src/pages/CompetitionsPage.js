@@ -18,8 +18,8 @@ export default function CompetitionsPage() {
         url: "/competition"
       });
 
-      setState(state => ({
-        ...state,
+      setState(prev => ({
+        ...prev,
         competitions: apiResult,
         loading: false
       }));
@@ -29,8 +29,8 @@ export default function CompetitionsPage() {
   }, [setState]);
 
   const onAddedCompetition = competition => {
-    setState(state => ({
-      ...state,
+    setState(prev => ({
+      ...prev,
       competitions: [...state.competitions, competition]
     }));
   };

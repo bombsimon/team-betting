@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import Generic from "./Generic";
+import { FormGroupInput, SetBoolKey } from "./Generic";
 import HttpService from "./HttpClient";
 
 export function SaveBetter({ current }) {
@@ -10,8 +10,6 @@ export function SaveBetter({ current }) {
     image: current === undefined ? "" : current.image,
     confirmed: current === undefined ? false : current.confirmed
   };
-
-  console.log(current);
 
   const initialButtonState = {
     label: current === undefined ? "Add" : "Update",
@@ -45,7 +43,7 @@ export function SaveBetter({ current }) {
     const { name, value } = event.target;
 
     // Assume valid - set button to true.
-    Generic.SetBoolKey(setButton, "disabled", false);
+    SetBoolKey(setButton, "disabled", false);
 
     setBetter(state => ({
       ...state,
@@ -73,26 +71,31 @@ export function SaveBetter({ current }) {
     };
 
     images.push(
-      <img
-        key={filename}
-        alt={filename}
-        src={"avatar/" + filename}
-        style={imgStyle}
+      <button
+        type="button"
         onClick={handleImageClick}
-      />
+        style={{ background: "none", border: "none", outline: 0 }}
+      >
+        <img
+          key={filename}
+          alt={filename}
+          src={`avatar/${filename}`}
+          style={imgStyle}
+        />
+      </button>
     );
   }
 
   return (
     <form onSubmit={onSubmit}>
-      <Generic.FormGroupInput
+      <FormGroupInput
         id="name"
         name="Name"
         value={better.name}
         onChange={handleInputChange}
       />
 
-      <Generic.FormGroupInput
+      <FormGroupInput
         id="email"
         name="Email"
         value={better.email}
@@ -101,13 +104,16 @@ export function SaveBetter({ current }) {
 
       <div className="form-group">{images}</div>
 
-      <button
-        className={
-          "btn btn-lg btn-primary" + (button.disabled ? " disabled" : "")
-        }
-      >
-        {button.label}
-      </button>
+      <div className="form-group">
+        <button
+          type="submit"
+          className={`btn btn-lg btn-primary${
+            button.disabled ? " disabled" : ""
+          }`}
+        >
+          {button.label}
+        </button>
+      </div>
     </form>
   );
 }
@@ -127,22 +133,22 @@ export function SendLoginEmail() {
     if (email === "") {
       return;
     }
+
+    setEmail("");
   };
 
   return (
     <div>
       <h1>Been here before?</h1>
       <p className="lead">
-        Just write your e-mail and we'll send you a sign in link!
+        Just write your e-mail and we&apos;ll send you a sign in link!
       </p>
       <form onSubmit={onSubmit}>
-        <Generic.FormGroupInput
-          id="email"
-          name="Email"
-          onChange={handleInputChange}
-        />
+        <FormGroupInput id="email" name="Email" onChange={handleInputChange} />
 
-        <button className="btn btn-lg btn-primary">Send!</button>
+        <button type="submit" className="btn btn-lg btn-primary">
+          Send!
+        </button>
       </form>
     </div>
   );
