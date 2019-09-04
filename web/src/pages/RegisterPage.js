@@ -1,22 +1,25 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 import { SendLoginEmail, SaveBetter } from "../Better";
 
-export default function RegisterPage() {
+export default function RegisterPage({ flash }) {
   return (
     <div className="container">
+      <h1>Been here before?</h1>
+      <p className="lead">
+        Just write your e-mail and we&apos;ll send you a sign in link!
+      </p>
+      <SendLoginEmail flash={flash} />
+
+      <hr />
+
       <h1>Register here</h1>
-      <SaveBetter />
-
-      <hr />
-
-      <SendLoginEmail />
-
-      <hr />
-      <Link to="/list">
-        <h1>Show competitions</h1>
-      </Link>
+      <p className="lead">
+        If you wan&apos;t to save all your contributions in all competitions
+        enter your email address. You don&apos;t have to do anything now but the
+        next time you get here we can send you an email to keep your progress!
+      </p>
+      <SaveBetter flash={flash} />
     </div>
   );
 }

@@ -3,16 +3,15 @@ import React, { useState } from "react";
 import { FormGroupInput, SetBoolKey } from "./Generic";
 import HttpService from "./HttpClient";
 
-export function SaveBetter({ current }) {
+export function SaveBetter({ current, flash }) {
   const initialBetterState = {
     name: current === undefined ? "" : current.name,
     email: current === undefined ? "" : current.email,
-    image: current === undefined ? "" : current.image,
-    confirmed: current === undefined ? false : current.confirmed
+    image: current === undefined ? "" : current.image
   };
 
   const initialButtonState = {
-    label: current === undefined ? "Add" : "Update",
+    label: current === undefined ? "Register" : "Update",
     disabled: true
   };
 
@@ -27,14 +26,20 @@ export function SaveBetter({ current }) {
     }
 
     (async () => {
-      const apiResult = await HttpService.Request({
-        method: "post",
-        url: "/better",
-        data: better
-      });
+      try {
+        await HttpService.Request({
+          method: "post",
+          url: "/better",
+          data: better
+        });
 
-      if (apiResult !== undefined) {
         setBetter(initialBetterState);
+      } catch (error) {
+        // HTTP 400?
+        flash({
+          level: "danger",
+          message: error.data.error
+        });
       }
     })();
   };
@@ -56,7 +61,7 @@ export function SaveBetter({ current }) {
 
     setBetter(state => ({
       ...state,
-      image: alt
+      image: state.image === alt ? undefined : alt
     }));
   };
 
@@ -72,16 +77,12 @@ export function SaveBetter({ current }) {
 
     images.push(
       <button
+        key={filename}
         type="button"
         onClick={handleImageClick}
         style={{ background: "none", border: "none", outline: 0 }}
       >
-        <img
-          key={filename}
-          alt={filename}
-          src={`avatar/${filename}`}
-          style={imgStyle}
-        />
+        <img alt={filename} src={`avatar/${filename}`} style={imgStyle} />
       </button>
     );
   }
@@ -118,7 +119,7 @@ export function SaveBetter({ current }) {
   );
 }
 
-export function SendLoginEmail() {
+export function SendLoginEmail({ flash }) {
   const [email, setEmail] = useState("");
 
   const handleInputChange = event => {
@@ -134,17 +135,35 @@ export function SendLoginEmail() {
       return;
     }
 
-    setEmail("");
+    (async () => {
+      try {
+        await HttpService.Request({
+          method: "post",
+          url: "/email/send",
+          data: {
+            email
+          }
+        });
+
+        setEmail();
+      } catch (error) {
+        flash({
+          level: "danger",
+          message: error.data.error
+        });
+      }
+    })();
   };
 
   return (
     <div>
-      <h1>Been here before?</h1>
-      <p className="lead">
-        Just write your e-mail and we&apos;ll send you a sign in link!
-      </p>
       <form onSubmit={onSubmit}>
-        <FormGroupInput id="email" name="Email" onChange={handleInputChange} />
+        <FormGroupInput
+          value={email}
+          id="email"
+          name="Email"
+          onChange={handleInputChange}
+        />
 
         <button type="submit" className="btn btn-lg btn-primary">
           Send!

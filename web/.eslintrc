@@ -13,10 +13,36 @@
     "jest": true
   },
   "rules": {
-    "react/jsx-filename-extension": [ 1, { "extensions": [ ".js", ".jsx" ] } ],
+    "react/jsx-filename-extension": [
+      1,
+      {
+        "extensions": [
+          ".js",
+          ".jsx"
+        ]
+      }
+    ],
+    "react/jsx-props-no-spreading": [
+      2,
+      {
+        "exceptions": [
+          "RegisterPage",
+          "CompetitionsPage",
+          "CompetitionPage"
+        ]
+      }
+    ],
     "react/prop-types": 0,
-    "no-plusplus": [ 2, { "allowForLoopAfterthoughts": true } ],
-    "import/imports-first": [ "error", "absolute-first" ],
+    "no-plusplus": [
+      2,
+      {
+        "allowForLoopAfterthoughts": true
+      }
+    ],
+    "import/imports-first": [
+      "error",
+      "absolute-first"
+    ],
     "import/newline-after-import": "error"
   },
   "globals": {
