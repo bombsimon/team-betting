@@ -228,17 +228,15 @@ func (s *Service) HandleResponse(c *gin.Context, broadcast []byte, response inte
 	if err != nil {
 		var httpStatus = http.StatusInternalServerError
 
-		if errors.Cause(err) == pkg.ErrNotFound {
-			c.JSON(http.StatusNotFound, err.Error())
-			return
-		}
-
-		if errors.Cause(err) == pkg.ErrBadRequest {
+		switch errors.Cause(err) {
+		case pkg.ErrNotFound:
+			httpStatus = http.StatusNotFound
+		case pkg.ErrBadRequest:
 			httpStatus = http.StatusBadRequest
-		}
-
-		if _, ok := errors.Cause(err).(validation.Errors); ok {
-			httpStatus = http.StatusBadRequest
+		default:
+			if _, ok := errors.Cause(err).(validation.Errors); ok {
+				httpStatus = http.StatusBadRequest
+			}
 		}
 
 		c.JSON(httpStatus, gin.H{"error": err.Error()})
