@@ -2,11 +2,15 @@ package betting
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bombsimon/team-betting/pkg"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"github.com/guregu/null"
 	"github.com/pkg/errors"
 )
@@ -15,6 +19,49 @@ const (
 	// HMACSecret is the secret to use for JWTs
 	HMACSecret = "s3cr3t"
 )
+
+// SendSignInEmail will send an email to help user sign in.
+func (s *Service) SendSignInEmail(ctx context.Context, email string) error {
+	var better pkg.Better
+
+	if err := s.DB.Gorm.Where("email = ?", email).Find(&better).Error; err != nil {
+		return errors.Wrapf(pkg.ErrNotFound, "could not find better with email %s", email)
+	}
+
+	better.LinkID = null.StringFrom(uuid.New().String())
+	better.LinkSentAt = null.TimeFrom(time.Now())
+	better.Confirmed = true
+
+	if err := s.DB.Gorm.Save(&better).Error; err != nil {
+		return errors.Wrap(err, "could not save reset link")
+	}
+
+	linkData := map[string]interface{}{
+		"email":   better.Email,
+		"link_id": better.LinkID.String,
+		"eat":     better.LinkSentAt.Time.Add(2 * time.Hour),
+	}
+
+	jsonLinkData, _ := json.Marshal(linkData)
+	b64Signin := base64.StdEncoding.EncodeToString(jsonLinkData)
+
+	message := []string{
+		"<h1>Here's your sign in link!</h1>",
+		fmt.Sprintf(
+			"<p><a href=\"http://localhost:3000?signin=%s\">Click here to sign in.</a></p>",
+			b64Signin,
+		),
+		"<p>If you did not request this email, just throw it away.</p>",
+		"<p>Happy betting!</p>",
+	}
+
+	return s.MailService.SendMail(&pkg.MailContent{
+		From:    "no-reply@sawert.se",
+		To:      email,
+		Subject: "Your sign in link!",
+		Body:    strings.Join(message, "\n"),
+	})
+}
 
 // SignInFromEmail will parse email sign in data and return a JWT if valid.
 func (s *Service) SignInFromEmail(ctx context.Context, email, hash string) (string, error) {

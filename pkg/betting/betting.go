@@ -12,7 +12,8 @@ import (
 // Service represents a service and implementation of the team betting
 // interface.
 type Service struct {
-	DB *pkg.Database
+	DB          *pkg.Database
+	MailService pkg.MailService
 }
 
 // AddCompetition will add a new competition.

@@ -19,6 +19,22 @@ type Service struct {
 	WS      *melody.Melody
 }
 
+// SendSignInEmail will send sign in email.
+func (s *Service) SendSignInEmail(c *gin.Context) {
+	var d struct {
+		Email string `json:"email"`
+	}
+
+	if err := c.ShouldBindJSON(&d); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := s.Betting.SendSignInEmail(context.Background(), d.Email)
+
+	s.HandleResponse(c, nil, nil, err)
+}
+
 // SignInEmail will sign in from mail.
 func (s *Service) SignInEmail(c *gin.Context) {
 	var (

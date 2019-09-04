@@ -49,6 +49,7 @@ type BettingService interface {
 	GetBetsForCompetition(ctx context.Context, id int) ([]*Bet, error)
 	GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*Competition, []*Competitor, []*Bet, error)
 
+	SendSignInEmail(ctx context.Context, email string) error
 	SignInFromEmail(ctx context.Context, email, hash string) (string, error)
 	JWTForBetter(ctx context.Context, better *Better) (string, error)
 	BetterFromJWT(ctx context.Context, tokenString string) (*Better, error)
@@ -112,14 +113,16 @@ type Competitor struct {
 
 // Better is someone who can make a Bet on a Competitor.
 type Better struct {
-	ID        int         `db:"id"         json:"id"         gorm:"primary_key"`
-	CreatedAt time.Time   `db:"created_at" json:"created_at"`
-	UpdatedAt null.Time   `db:"updated_at" json:"updated_at"`
-	DeletedAt null.Time   `db:"deleted_at" json:"deleted_at"`
-	Confirmed bool        `db:"confirmed"  json:"confirmed"  gorm:"type:tinyint(1); default 0"`
-	Name      string      `db:"name"       json:"name"       gorm:"type:varchar(100); not null"`
-	Email     string      `db:"email"      json:"email"      gorm:"type:varchar(100); not null; unique"`
-	Image     null.String `db:"image"      json:"image"      gorm:"type:varchar(100)"`
+	ID         int         `db:"id"           json:"id"           gorm:"primary_key"`
+	CreatedAt  time.Time   `db:"created_at"   json:"created_at"`
+	UpdatedAt  null.Time   `db:"updated_at"   json:"updated_at"`
+	DeletedAt  null.Time   `db:"deleted_at"   json:"deleted_at"`
+	LinkSentAt null.Time   `db:"link_sent_at" json:"link_sent_at" gorm:type:timestamp"`
+	Confirmed  bool        `db:"confirmed"    json:"confirmed"    gorm:"type:tinyint(1); default 0"`
+	Name       string      `db:"name"         json:"name"         gorm:"type:varchar(100); not null"`
+	Email      string      `db:"email"        json:"email"        gorm:"type:varchar(100); not null; unique"`
+	Image      null.String `db:"image"        json:"image"        gorm:"type:varchar(100)"`
+	LinkID     null.String `db:"link_id"      json:"link_id"      gorm:"type:varchar(100); unique"`
 }
 
 // Bet is a bet put on a Competitor in a certain Competition.

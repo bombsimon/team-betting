@@ -9,6 +9,7 @@ import (
 	"github.com/bombsimon/team-betting/pkg/database"
 	bhttp "github.com/bombsimon/team-betting/pkg/http"
 	middleware "github.com/bombsimon/team-betting/pkg/http/middlewares"
+	"github.com/bombsimon/team-betting/pkg/mail"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/olahol/melody.v1"
@@ -21,7 +22,8 @@ func main() {
 		logger    = log.New(os.Stdout, "TB: ", log.LstdFlags)
 
 		bettingService = &betting.Service{
-			DB: database.New(os.Getenv("DB_DSN")),
+			DB:          database.New(os.Getenv("DB_DSN")),
+			MailService: mail.New(),
 		}
 
 		httpService = bhttp.Service{
@@ -33,6 +35,7 @@ func main() {
 	router.Use(cors.Default())
 	router.Use(middleware.AuthJWT(bettingService))
 
+	router.POST("/email/send", httpService.SendSignInEmail)
 	router.GET("/email/sign_in", httpService.SignInEmail)
 
 	router.GET("/competition", httpService.GetCompetitions)
