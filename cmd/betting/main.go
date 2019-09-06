@@ -32,31 +32,42 @@ func main() {
 		}
 	)
 
-	router.Use(cors.Default())
-	router.Use(middleware.AuthJWT(bettingService))
+	config := cors.DefaultConfig()
+	config.AddAllowHeaders("Authorization")
+	config.AllowAllOrigins = true
+	router.Use(cors.New(config))
 
 	router.POST("/email/send", httpService.SendSignInEmail)
-	router.GET("/email/sign_in", httpService.SignInEmail)
-
-	router.GET("/competition", httpService.GetCompetitions)
-	router.POST("/competition", httpService.AddCompetition)
-	router.GET("/competition/:id", httpService.GetCompetition)
-	router.DELETE("/competition/:id", httpService.DeleteCompetition)
-
-	router.GET("/competitor", httpService.GetCompetitor)
-	router.POST("/competitor", httpService.AddCompetitor)
-	router.GET("/competitor/:id", httpService.GetCompetitor)
-	router.DELETE("/competitor/:id", httpService.DeleteCompetitor)
-
-	router.GET("/better", httpService.GetBetters)
+	router.POST("/email/verify", httpService.SignInEmail)
 	router.POST("/better", httpService.AddBetter)
-	router.GET("/better/:id", httpService.GetBetter)
-	router.DELETE("/better/:id", httpService.DeleteBetter)
 
-	router.GET("/bet", httpService.GetBets)
-	router.PUT("/bet", httpService.AddBet)
-	router.GET("/bet/:id", httpService.GetBet)
-	router.DELETE("/bet/:id", httpService.DeleteBet)
+	authed := router.Group("/")
+
+	if os.Getenv("DEVELOPMENT") == "" {
+		authed.Use(middleware.AuthJWT(bettingService))
+	}
+
+	{
+		authed.GET("/competition", httpService.GetCompetitions)
+		authed.POST("/competition", httpService.AddCompetition)
+		authed.GET("/competition/:id", httpService.GetCompetition)
+		authed.DELETE("/competition/:id", httpService.DeleteCompetition)
+		authed.POST("/competition/:id/lock", httpService.LockCompetition)
+
+		authed.GET("/competitor", httpService.GetCompetitor)
+		authed.POST("/competitor", httpService.AddCompetitor)
+		authed.GET("/competitor/:id", httpService.GetCompetitor)
+		authed.DELETE("/competitor/:id", httpService.DeleteCompetitor)
+
+		authed.GET("/better", httpService.GetBetters)
+		authed.GET("/better/:id", httpService.GetBetter)
+		authed.DELETE("/better/:id", httpService.DeleteBetter)
+
+		authed.GET("/bet", httpService.GetBets)
+		authed.PUT("/bet", httpService.AddBet)
+		authed.GET("/bet/:id", httpService.GetBet)
+		authed.DELETE("/bet/:id", httpService.DeleteBet)
+	}
 
 	router.Static("/assets", "./cmd/betting/assets")
 

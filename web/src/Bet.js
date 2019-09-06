@@ -61,6 +61,9 @@ export function Bet({ competitorId, competition, bets, selectInputs }) {
 
     (async () => {
       const apiResult = await HttpService.Request({
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authorization")}`
+        },
         method: "put",
         url: "/bet",
         data: {

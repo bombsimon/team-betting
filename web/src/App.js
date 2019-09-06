@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Route, Switch } from "react-router-dom";
+import { Redirect, Route, Switch } from "react-router-dom";
 
 import "./index.css";
 
@@ -30,23 +30,41 @@ export default function App() {
       ""
     );
 
+  const isUserLoggedIn = () => {
+    const jwt = localStorage.getItem("authorization");
+
+    return Boolean(jwt);
+  };
+
   return (
     <>
       {alertBlock}
 
       <Switch>
         <Route
-          exact
-          path="/"
+          path="/login"
           render={props => <RegisterPage {...props} flash={setAlert} />}
         />
         <Route
-          path="/list"
-          render={props => <CompetitionsPage {...props} flash={setAlert} />}
+          path="/"
+          exact
+          render={props =>
+            isUserLoggedIn() ? (
+              <CompetitionsPage {...props} flash={setAlert} />
+            ) : (
+              <Redirect to="/login" />
+            )
+          }
         />
         <Route
           path="/:code"
-          render={props => <CompetitionPage {...props} flash={setAlert} />}
+          render={props =>
+            isUserLoggedIn() ? (
+              <CompetitionPage {...props} flash={setAlert} />
+            ) : (
+              <Redirect to="/login" />
+            )
+          }
         />
       </Switch>
     </>

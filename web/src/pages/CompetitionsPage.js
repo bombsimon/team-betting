@@ -14,6 +14,9 @@ export default function CompetitionsPage() {
   useEffect(() => {
     const getCompetitions = async () => {
       const apiResult = await HttpService.Request({
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authorization")}`
+        },
         method: "get",
         url: "/competition"
       });

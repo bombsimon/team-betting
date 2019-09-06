@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/guregu/null"
 	"github.com/pkg/errors"
 )
@@ -27,7 +28,7 @@ var (
 type BettingService interface {
 	AddCompetition(ctx context.Context, competition *Competition) (*Competition, error)
 	AddCompetitor(ctx context.Context, competitor *Competitor, bindToCompetitionID *int) (*Competitor, error)
-	AddBetter(ctx context.Context, better *Better) (*Better, error)
+	AddBetter(ctx context.Context, better *Better) (string, error)
 	AddBet(ctx context.Context, bet *Bet) (*Bet, error)
 
 	GetCompetition(ctx context.Context, id int) (*Competition, error)
@@ -49,10 +50,27 @@ type BettingService interface {
 	GetBetsForCompetition(ctx context.Context, id int) ([]*Bet, error)
 	GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*Competition, []*Competitor, []*Bet, error)
 
-	SendSignInEmail(ctx context.Context, email string) error
-	SignInFromEmail(ctx context.Context, email, hash string) (string, error)
-	JWTForBetter(ctx context.Context, better *Better) (string, error)
 	BetterFromJWT(ctx context.Context, tokenString string) (*Better, error)
+	JWTForBetter(ctx context.Context, better *Better) (string, error)
+	LockCompetition(ctx context.Context, id int, result []*Result) (*CompetitionMetrics, error)
+	SendSignInEmail(ctx context.Context, email string) error
+	SignInFromEmail(ctx context.Context, email, linkID string) (string, error)
+}
+
+// SignInData represents the data used for signing.
+type SignInData struct {
+	Encoding  string    `json:"encoding,omitempty"`
+	LinkID    string    `json:"link_id,omitempty"`
+	Email     string    `json:"email,omitempty"`
+	ExpiresAt time.Time `json:"eat,omitempty"`
+}
+
+// Claims represents the claims in a JWT.
+type Claims struct {
+	jwt.StandardClaims
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+	Image string `json:"image"`
 }
 
 // MetricValue represents who has what value, e.g. who has the lowest average
@@ -117,7 +135,7 @@ type Better struct {
 	CreatedAt  time.Time   `db:"created_at"   json:"created_at"`
 	UpdatedAt  null.Time   `db:"updated_at"   json:"updated_at"`
 	DeletedAt  null.Time   `db:"deleted_at"   json:"deleted_at"`
-	LinkSentAt null.Time   `db:"link_sent_at" json:"link_sent_at" gorm:type:timestamp"`
+	LinkSentAt null.Time   `db:"link_sent_at" json:"link_sent_at" gorm:"type:timestamp"`
 	Confirmed  bool        `db:"confirmed"    json:"confirmed"    gorm:"type:tinyint(1); default 0"`
 	Name       string      `db:"name"         json:"name"         gorm:"type:varchar(100); not null"`
 	Email      string      `db:"email"        json:"email"        gorm:"type:varchar(100); not null; unique"`

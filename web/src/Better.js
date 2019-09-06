@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { FormGroupInput, SetBoolKey } from "./Generic";
 import HttpService from "./HttpClient";
 
-export function SaveBetter({ current, flash }) {
+export function SaveBetter({ current, flash, onSave }) {
   const initialBetterState = {
     name: current === undefined ? "" : current.name,
     email: current === undefined ? "" : current.email,
@@ -27,13 +27,20 @@ export function SaveBetter({ current, flash }) {
 
     (async () => {
       try {
-        await HttpService.Request({
+        const result = await HttpService.Request({
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authorization")}`
+          },
           method: "post",
           url: "/better",
           data: better
         });
 
         setBetter(initialBetterState);
+
+        localStorage.setItem("authorization", result.jwt);
+
+        onSave();
       } catch (error) {
         // HTTP 400?
         flash({
@@ -145,7 +152,7 @@ export function SendLoginEmail({ flash }) {
           }
         });
 
-        setEmail();
+        setEmail("");
       } catch (error) {
         flash({
           level: "danger",

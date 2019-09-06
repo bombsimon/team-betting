@@ -1,9 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Redirect } from "react-router-dom";
 
 import { SendLoginEmail, SaveBetter } from "../Better";
 
-export default function RegisterPage({ flash }) {
-  return (
+import HttpService from "../HttpClient";
+
+export default function RegisterPage({ location, flash }) {
+  const params = new URLSearchParams(location.search);
+  const linkData = params.get("signin");
+
+  const [validLink, setValidLink] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!linkData) {
+          return;
+        }
+
+        const result = await HttpService.Request({
+          method: "post",
+          url: "/email/verify",
+          data: {
+            encoding: linkData
+          }
+        });
+
+        setValidLink(true);
+        localStorage.setItem("authorization", result.jwt);
+      } catch (error) {
+        // HTTP 400?
+        flash({
+          level: "danger",
+          message: error.data.error
+        });
+      }
+    })();
+  }, [flash, linkData, setValidLink]);
+
+  const betterSaved = () => {
+    setValidLink(true)
+  }
+
+  return validLink ? (
+    <Redirect to="/" />
+  ) : (
     <div className="container">
       <h1>Been here before?</h1>
       <p className="lead">
@@ -19,7 +60,7 @@ export default function RegisterPage({ flash }) {
         enter your email address. You don&apos;t have to do anything now but the
         next time you get here we can send you an email to keep your progress!
       </p>
-      <SaveBetter flash={flash} />
+      <SaveBetter flash={flash} onSave={betterSaved} />
     </div>
   );
 }

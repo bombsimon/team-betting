@@ -46,6 +46,9 @@ export function AddCompetition(props) {
 
     (async () => {
       const apiResult = await HttpService.Request({
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authorization")}`
+        },
         method: "post",
         url: "/competition",
         data: request

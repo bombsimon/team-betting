@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -38,12 +39,27 @@ func (s *Service) SendSignInEmail(c *gin.Context) {
 // SignInEmail will sign in from mail.
 func (s *Service) SignInEmail(c *gin.Context) {
 	var (
-		email = c.Query("email")
-		hash  = c.Query("hash")
-		data  map[string]string
+		sd   pkg.SignInData
+		data map[string]string
 	)
 
-	jwtString, err := s.Betting.SignInFromEmail(context.Background(), email, hash)
+	if err := c.ShouldBindJSON(&sd); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	b64Data, err := base64.StdEncoding.DecodeString(sd.Encoding)
+	if err != nil {
+		s.HandleResponse(c, nil, nil, err)
+		return
+	}
+
+	if err := json.Unmarshal(b64Data, &sd); err != nil {
+		s.HandleResponse(c, nil, nil, err)
+		return
+	}
+
+	jwtString, err := s.Betting.SignInFromEmail(context.Background(), sd.Email, sd.LinkID)
 	if err == nil {
 		data = map[string]string{
 			"jwt": jwtString,
@@ -94,6 +110,22 @@ func (s *Service) DeleteCompetition(c *gin.Context) {
 	err := s.Betting.DeleteCompetition(context.Background(), id)
 
 	s.HandleResponse(c, nil, nil, err)
+}
+
+// LockCompetition will lock a competition.
+func (s *Service) LockCompetition(c *gin.Context) {
+	var result []*pkg.Result
+
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	if err := c.ShouldBindJSON(&result); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	data, err := s.Betting.LockCompetition(context.Background(), id, result)
+
+	s.HandleResponse(c, nil, data, err)
 }
 
 // GetCompetitors returns all competitions.
@@ -162,8 +194,11 @@ func (s *Service) AddBetter(c *gin.Context) {
 	}
 
 	data, err := s.Betting.AddBetter(context.Background(), &better)
+	response := map[string]string{
+		"jwt": data,
+	}
 
-	s.HandleResponse(c, nil, data, err)
+	s.HandleResponse(c, nil, response, err)
 }
 
 // DeleteBetter returns a better (if it exists).

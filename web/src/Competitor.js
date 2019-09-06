@@ -26,6 +26,9 @@ export function AddCompetitor({ competitionId, onAddedCompetitor }) {
     event.preventDefault();
     (async () => {
       const apiResult = await HttpService.Request({
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authorization")}`
+        },
         method: "post",
         url: "/competitor",
         data: competitor
@@ -56,7 +59,9 @@ export function AddCompetitor({ competitionId, onAddedCompetitor }) {
           onChange={handleInputChange}
         />
 
-        <button type="submit" className="btn btn-lg btn-primary">Add</button>
+        <button type="submit" className="btn btn-lg btn-primary">
+          Add
+        </button>
       </form>
     </div>
   );

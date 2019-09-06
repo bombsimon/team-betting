@@ -23,7 +23,13 @@ export default function CompetitionPage(props) {
 
   useEffect(() => {
     const getCompetition = async () => {
-      const apiResult = await HttpService.GetCompetition(code);
+      const apiResult = await HttpService.Request({
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authorization")}`
+        },
+        method: "get",
+        url: `/competition/${code}`
+      });
 
       setCompetition(prev => ({
         ...prev,
@@ -95,7 +101,7 @@ export default function CompetitionPage(props) {
               competition={state.competition}
               bets={betsPerCompetitor[competitor.id]}
               onAddedBet={updateBetPerCompetitor}
-              selectInputs={false}
+              selectInputs
             />
           </div>
         </div>
