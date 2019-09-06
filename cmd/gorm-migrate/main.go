@@ -30,6 +30,10 @@ func main() {
 	db.AutoMigrate(&pkg.Competition{}).
 		AddForeignKey("created_by_id", "better(id)", "CASCADE", "CASCADE")
 
+	db.AutoMigrate(&pkg.Result{}).
+		AddForeignKey("competition_id", "competition(id)", "CASCADE", "CASCADE").
+		AddForeignKey("competitor_id", "competitor(id)", "CASCADE", "CASCADE")
+
 	db.AutoMigrate(&pkg.Bet{}).
 		AddForeignKey("better_id", "better(id)", "CASCADE", "CASCADE").
 		AddForeignKey("competition_id", "competition(id)", "CASCADE", "CASCADE").

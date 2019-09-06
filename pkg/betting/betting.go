@@ -2,6 +2,7 @@ package betting
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -74,9 +75,9 @@ func (s *Service) AddCompetitor(ctx context.Context, competitor *pkg.Competitor,
 }
 
 // AddBetter will add a new better that may place bets.
-func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (*pkg.Better, error) {
+func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (string, error) {
 	if err := better.Validate(); err != nil {
-		return nil, errors.Wrap(err, "bad request")
+		return "", errors.Wrap(err, "bad request")
 	}
 
 	cleaned := pkg.Better{
@@ -87,13 +88,18 @@ func (s *Service) AddBetter(ctx context.Context, better *pkg.Better) (*pkg.Bette
 
 	if err := s.DB.Gorm.Save(&cleaned).Error; err != nil {
 		if database.ErrType(err) == database.ErrDuplicateKey {
-			return nil, errors.New("a user with that email already exist")
+			return "", errors.New("a user with that email already exist")
 		}
 
-		return nil, errors.Wrap(err, "could not create competitor")
+		return "", errors.Wrap(err, "could not create competitor")
 	}
 
-	return &cleaned, nil
+	signedToken, err := s.JWTForBetter(ctx, &cleaned)
+	if err != nil {
+		return "", errors.Wrap(err, "could not create JWT for new user")
+	}
+
+	return signedToken, nil
 }
 
 // AddBet will add a bet for a better to a competitor in a competition.
@@ -189,14 +195,6 @@ func (s *Service) GetCompetitions(ctx context.Context, competitionIDs []int) ([]
 
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get competition")
-	}
-
-	for _, c := range competitions {
-		if c.Locked {
-			if metrics, err := s.GetCompetitionMetrics(ctx, c.ID); err != nil {
-				c.Metrics = metrics
-			}
-		}
 	}
 
 	return competitions, nil
@@ -397,4 +395,52 @@ func (s *Service) GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*pk
 	}
 
 	return competitions, competitors, bets, nil
+}
+
+// LockCompetition takes the final result and locks a competition.
+func (s *Service) LockCompetition(ctx context.Context, id int, result []*pkg.Result) (*pkg.CompetitionMetrics, error) {
+	c, err := s.GetCompetition(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Locked {
+		return nil, errors.Wrap(pkg.ErrBadRequest, "competition already locked")
+	}
+
+	competitorIDsInCompetition := map[int]struct{}{}
+	for _, v := range c.Competitors {
+		competitorIDsInCompetition[v.ID] = struct{}{}
+	}
+
+	tx := s.DB.Gorm.Begin()
+
+	c.Locked = true
+	if err := tx.Save(c).Error; err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "could not lock competition")
+	}
+
+	for _, r := range result {
+		r.CompetitionID = id
+
+		if _, ok := competitorIDsInCompetition[r.CompetitorID]; !ok {
+			tx.Rollback()
+			return nil, errors.Wrap(pkg.ErrBadRequest, "competitor does not compete in competition")
+		}
+
+		if err := tx.Save(r).Error; err != nil {
+			tx.Rollback()
+
+			if strings.Contains(err.Error(), pkg.ResultPlacingKey) {
+				return nil, errors.Wrap(pkg.ErrBadRequest, "only cone competitor can be placed at each position")
+			}
+
+			return nil, errors.Wrap(err, "could not save result")
+		}
+	}
+
+	tx.Commit()
+
+	return s.GetCompetitionMetrics(ctx, id)
 }

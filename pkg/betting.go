@@ -11,11 +11,13 @@ import (
 
 // Constants for table names in the data model.
 const (
-	BetTable                   = "bet"
-	BetterTable                = "better"
-	CompetitionCompetitorTable = "competition_competitor"
-	CompetitionTable           = "competition"
-	CompetitorTable            = "competitor"
+	BetTable                       = "bet"
+	BetterTable                    = "better"
+	CompetitionCompetitorTable     = "competition_competitor"
+	CompetitionTable               = "competition"
+	CompetitorTable                = "competitor"
+	ResultPlacingKey               = "idx_competition_id_placing"
+	ResultCompetitionCompetitorKey = "idx_competition_id_competitor_id"
 )
 
 // Common errors returned throughout the service.
@@ -127,6 +129,16 @@ type Competitor struct {
 	Description  null.String    `db:"description" json:"description"   gorm:"type:varchar(255)"`
 	Image        null.String    `db:"image"       json:"image"         gorm:"type:varchar(100)"`
 	Competitions []*Competition `db:"-"           json:"competitions"  gorm:"many2many:competition_competitor"`
+}
+
+// Result represents
+type Result struct {
+	Competition   *Competition `db:"-"                         json:"competition"`
+	CompetitionID int          `db:"competition_id"            json:"competition_id"         gorm:"unique_index:idx_competition_id_placing,idx_competition_id_competitor_id; not null"`
+	Competitor    *Competitor  `db:"-"                         json:"competitor"`
+	CompetitorID  int          `db:"competitor_id"             json:"competitor_id"          gorm:"unique_index:idx_competition_id_competitor_id; not null"`
+	Placing       int          `db:"placing"                   json:"placing"                gorm:"unique_index:idx_competition_id_placing"`
+	AverageScore  null.Int     `db:"-"                         json:"average_score"          gorm:"-"`
 }
 
 // Better is someone who can make a Bet on a Competitor.
