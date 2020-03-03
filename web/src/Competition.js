@@ -63,36 +63,54 @@ export function AddCompetition(props) {
   };
 
   return (
-    <form onSubmit={onSubmit}>
-      <Generic.FormGroupInput
-        value={competition.name}
-        id="name"
-        name="Name"
-        onChange={handleInputChange}
-      />
-      <Generic.FormGroupInput
-        value={competition.description}
-        id="description"
-        name="Description"
-        onChange={handleInputChange}
-      />
-      <Generic.FormGroupInput
-        value={competition.min_score}
-        id="min_score"
-        name="Minimum score"
-        onChange={handleInputChange}
-      />
-      <Generic.FormGroupInput
-        value={competition.max_score}
-        id="max_score"
-        name="Maximum score"
-        onChange={handleInputChange}
-      />
+    <>
+      <p style={{ paddingTop: 20 }}>
+        <button
+          className="btn btn-primary"
+          type="button"
+          data-toggle="collapse"
+          data-target="#collapseExample"
+          aria-expanded="false"
+          aria-controls="collapseExample"
+        >
+          Add new competition
+        </button>
+      </p>
+      <div className="collapse" id="collapseExample">
+        <div className="card card-body">
+          <form onSubmit={onSubmit}>
+            <Generic.FormGroupInput
+              value={competition.name}
+              id="name"
+              name="Name"
+              onChange={handleInputChange}
+            />
+            <Generic.FormGroupInput
+              value={competition.description}
+              id="description"
+              name="Description"
+              onChange={handleInputChange}
+            />
+            <Generic.FormGroupInput
+              value={competition.min_score}
+              id="min_score"
+              name="Minimum score"
+              onChange={handleInputChange}
+            />
+            <Generic.FormGroupInput
+              value={competition.max_score}
+              id="max_score"
+              name="Maximum score"
+              onChange={handleInputChange}
+            />
 
-      <button type="submit" className="btn btn-lg btn-primary">
-        Add
-      </button>
-    </form>
+            <button type="submit" className="btn btn-lg btn-primary">
+              Add
+            </button>
+          </form>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -102,6 +120,14 @@ export function Competition({ competition }) {
       <h1>{competition.name}</h1>
       <p className="lead">{competition.description}</p>
       <Generic.SmallDate date={competition.created_at} />
+      <p>
+        <button type="submit" className="btn btn-lg btn-danger mr-1">
+          Lock
+        </button>
+        <button type="submit" className="btn btn-lg btn-warning">
+          Add result
+        </button>
+      </p>
     </div>
   );
 }

@@ -26,8 +26,8 @@ export default function RegisterPage({ location, flash }) {
           }
         });
 
-        setValidLink(true);
         localStorage.setItem("authorization", result.jwt);
+        setValidLink(true);
       } catch (error) {
         // HTTP 400?
         flash({
@@ -39,28 +39,28 @@ export default function RegisterPage({ location, flash }) {
   }, [flash, linkData, setValidLink]);
 
   const betterSaved = () => {
-    setValidLink(true)
-  }
+    setValidLink(true);
+  };
 
   return validLink ? (
     <Redirect to="/" />
   ) : (
     <div className="container">
+      <h1>Register here</h1>
+      <p className="lead">
+        If you want to save all your contributions in all competitions enter
+        your email address. You don&apos;t have to do anything now but the next
+        time you get here we can send you an email to keep your progress!
+      </p>
+      <SaveBetter flash={flash} onSave={betterSaved} />
+
+      <hr />
+
       <h1>Been here before?</h1>
       <p className="lead">
         Just write your e-mail and we&apos;ll send you a sign in link!
       </p>
       <SendLoginEmail flash={flash} />
-
-      <hr />
-
-      <h1>Register here</h1>
-      <p className="lead">
-        If you wan&apos;t to save all your contributions in all competitions
-        enter your email address. You don&apos;t have to do anything now but the
-        next time you get here we can send you an email to keep your progress!
-      </p>
-      <SaveBetter flash={flash} onSave={betterSaved} />
     </div>
   );
 }

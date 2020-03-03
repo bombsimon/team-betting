@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 
+import {
+  sortableContainer,
+  sortableElement,
+  sortableHandle,
+  arrayMove
+} from "react-sortable-hoc";
 import { Competition } from "../Competition";
 import { AddCompetitor, Competitor } from "../Competitor";
 import { Bet } from "../Bet";
@@ -69,20 +75,46 @@ export default function CompetitionPage(props) {
     });
   };
 
+  const onSortEnd = ({ oldIndex, newIndex }) => {
+    setCompetition(prev => ({
+      ...prev,
+      competition: {
+        ...prev.competition,
+        competitors: arrayMove(
+          state.competition.competitors,
+          oldIndex,
+          newIndex
+        )
+      }
+    }));
+  };
+
+  const DragHandle = sortableHandle(() => <div className="DragHandle" />);
+
+  const SortableItem = sortableElement(({ value }) => (
+    <li className="SortableItem">
+      <DragHandle />
+      {value.name} - {value.description}
+    </li>
+  ));
+
+  const SortableContainer = sortableContainer(({ children }) => {
+    return <ul className="SortableList">{children}</ul>;
+  });
+
   return state.loading ? (
     <div>Loading...</div>
   ) : (
     <div className="container">
       <Competition competition={state.competition} />
       <hr />
-
       <AddCompetitor
         competitionId={state.competition.id}
         onAddedCompetitor={updateCompetitors}
       />
       <hr />
-
       <h1>Competitors for competition</h1>
+      {/*
       {state.competition.competitors.map(competitor => (
         <div
           key={competitor.id}
@@ -106,6 +138,17 @@ export default function CompetitionPage(props) {
           </div>
         </div>
       ))}
+      */}
+      <SortableContainer onSortEnd={onSortEnd} useDragHandle>
+        {state.competition.competitors.map((value, index) => (
+          <SortableItem
+            helperClass="SortableHelper"
+            key={`item-${value.id}`}
+            index={index}
+            value={value}
+          />
+        ))}
+      </SortableContainer>
       <hr />
     </div>
   );

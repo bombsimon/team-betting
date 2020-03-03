@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 
 import "./index.css";
+import "./App.scss";
 
 import CompetitionPage from "./pages/CompetitionPage";
 import CompetitionsPage from "./pages/CompetitionsPage";
@@ -43,7 +44,13 @@ export default function App() {
       <Switch>
         <Route
           path="/login"
-          render={props => <RegisterPage {...props} flash={setAlert} />}
+          render={props =>
+            isUserLoggedIn() ? (
+              <Redirect to="/" />
+            ) : (
+              <RegisterPage {...props} flash={setAlert} />
+            )
+          }
         />
         <Route
           path="/"

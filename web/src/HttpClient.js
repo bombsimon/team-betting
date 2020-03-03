@@ -20,6 +20,11 @@ function Request(options) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
       console.error("Headers:", error.response.headers);
+
+      // Clear the JWT if we have an old one and is being rejected.
+      if (error.response.status === 401) {
+        localStorage.removeItem("authorization");
+      }
     } else {
       // Something else happened while setting up the request
       // triggered the error
@@ -48,4 +53,4 @@ const HttpService = {
 
 export default HttpService;
 
-// vim: set ts=2 sw=2 et
+// vim: set ts=2 sw=2 et:
