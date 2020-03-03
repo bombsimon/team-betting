@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -18,6 +19,7 @@ import (
 type Service struct {
 	Betting pkg.BettingService
 	WS      *melody.Melody
+	Logger  *log.Logger
 }
 
 // SendSignInEmail will send sign in email.
@@ -93,10 +95,7 @@ func (s *Service) AddCompetition(c *gin.Context) {
 		return
 	}
 
-	if err := isCreator(c, competition.CreatedByID); err != nil {
-		s.HandleResponse(c, nil, nil, err)
-		return
-	}
+	competition.CreatedByID = s.currentUserID(c)
 
 	data, err := s.Betting.AddCompetition(context.Background(), &competition)
 
@@ -114,6 +113,15 @@ func (s *Service) DeleteCompetition(c *gin.Context) {
 
 // LockCompetition will lock a competition.
 func (s *Service) LockCompetition(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	err := s.Betting.LockCompetition(context.Background(), id)
+
+	s.HandleResponse(c, nil, nil, err)
+}
+
+// SetCompetitionResult will set the result for a competition.
+func (s *Service) SetCompetitionResult(c *gin.Context) {
 	var result []*pkg.Result
 
 	id, _ := strconv.Atoi(c.Param("id"))
@@ -123,7 +131,7 @@ func (s *Service) LockCompetition(c *gin.Context) {
 		return
 	}
 
-	data, err := s.Betting.LockCompetition(context.Background(), id, result)
+	data, err := s.Betting.SetCompetitionResult(context.Background(), id, result)
 
 	s.HandleResponse(c, nil, data, err)
 }
@@ -154,6 +162,8 @@ func (s *Service) AddCompetitor(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	in.Competitor.CreatedByID = s.currentUserID(c)
 
 	data, err := s.Betting.AddCompetitor(context.Background(), &in.Competitor, in.CompetitionID)
 
@@ -237,6 +247,8 @@ func (s *Service) AddBet(c *gin.Context) {
 		return
 	}
 
+	bet.BetterID = s.currentUserID(c)
+
 	data, err := s.Betting.AddBet(context.Background(), &bet)
 	if data != nil {
 		bc, _ = json.MarshalIndent(&data, "", "  ")
@@ -254,24 +266,20 @@ func (s *Service) DeleteBet(c *gin.Context) {
 	s.HandleResponse(c, nil, nil, err)
 }
 
-func isCreator(c *gin.Context, creatorID int) error {
-	return nil
-
+func (s *Service) currentUserID(c *gin.Context) int {
 	b, ok := c.Get("better")
 	if !ok {
-		return errors.Wrap(pkg.ErrBadRequest, "no or invalid authorization header")
+		s.Logger.Print("no or invalid authorization header")
+		return -1
 	}
 
 	better, ok := b.(*pkg.Better)
 	if !ok {
-		return errors.Wrap(pkg.ErrBadRequest, "authorization isn't a better")
+		s.Logger.Print("authorization isn't a better")
+		return -1
 	}
 
-	if better.ID != creatorID {
-		return errors.Wrap(pkg.ErrBadRequest, "creator is not signed in user")
-	}
-
-	return nil
+	return better.ID
 }
 
 // HandleResponse will respond according to the object and error passed.

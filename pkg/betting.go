@@ -16,6 +16,7 @@ const (
 	CompetitionCompetitorTable     = "competition_competitor"
 	CompetitionTable               = "competition"
 	CompetitorTable                = "competitor"
+	ResultTable                    = "result"
 	ResultPlacingKey               = "idx_competition_id_placing"
 	ResultCompetitionCompetitorKey = "idx_competition_id_competitor_id"
 )
@@ -23,6 +24,7 @@ const (
 // Common errors returned throughout the service.
 var (
 	ErrBadRequest = errors.New("bad request")
+	ErrInternal   = errors.New("internal error")
 	ErrNotFound   = errors.New("not found")
 )
 
@@ -54,7 +56,8 @@ type BettingService interface {
 
 	BetterFromJWT(ctx context.Context, tokenString string) (*Better, error)
 	JWTForBetter(ctx context.Context, better *Better) (string, error)
-	LockCompetition(ctx context.Context, id int, result []*Result) (*CompetitionMetrics, error)
+	LockCompetition(ctx context.Context, id int) error
+	SetCompetitionResult(ctx context.Context, id int, result []*Result) (*CompetitionMetrics, error)
 	SendSignInEmail(ctx context.Context, email string) error
 	SignInFromEmail(ctx context.Context, email, linkID string) (string, error)
 }

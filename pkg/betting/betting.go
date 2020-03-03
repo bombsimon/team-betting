@@ -398,14 +398,34 @@ func (s *Service) GetCreatedObjectsForBetter(ctx context.Context, id int) ([]*pk
 }
 
 // LockCompetition takes the final result and locks a competition.
-func (s *Service) LockCompetition(ctx context.Context, id int, result []*pkg.Result) (*pkg.CompetitionMetrics, error) {
+func (s *Service) LockCompetition(ctx context.Context, id int) error {
+	c, err := s.GetCompetition(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if c.Locked {
+		return errors.Wrap(pkg.ErrBadRequest, "competition already locked")
+	}
+
+	c.Locked = true
+
+	if err := s.DB.Gorm.Save(c).Error; err != nil {
+		return errors.Wrap(err, "could not lock competition")
+	}
+
+	return nil
+}
+
+// SetCompetitionResult will set the result for a competition.
+func (s *Service) SetCompetitionResult(ctx context.Context, id int, result []*pkg.Result) (*pkg.CompetitionMetrics, error) {
 	c, err := s.GetCompetition(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	if c.Locked {
-		return nil, errors.Wrap(pkg.ErrBadRequest, "competition already locked")
+	if !c.Locked {
+		return nil, errors.Wrap(pkg.ErrBadRequest, "competition not locked")
 	}
 
 	competitorIDsInCompetition := map[int]struct{}{}
@@ -414,12 +434,6 @@ func (s *Service) LockCompetition(ctx context.Context, id int, result []*pkg.Res
 	}
 
 	tx := s.DB.Gorm.Begin()
-
-	c.Locked = true
-	if err := tx.Save(c).Error; err != nil {
-		tx.Rollback()
-		return nil, errors.Wrap(err, "could not lock competition")
-	}
 
 	for _, r := range result {
 		r.CompetitionID = id

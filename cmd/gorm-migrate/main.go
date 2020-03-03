@@ -98,6 +98,7 @@ func testAddData(db *gorm.DB) {
 func testGetData(db *gorm.DB) {
 	// Fetch the first bet
 	var bet pkg.Bet
+
 	db.Preload("Competition").Preload("Competitor").Preload("Better").First(&bet)
 
 	fmt.Printf("%-20s %s\n", "Created", bet.CreatedAt)

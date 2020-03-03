@@ -29,12 +29,14 @@ func main() {
 		httpService = bhttp.Service{
 			Betting: bettingService,
 			WS:      wsManager,
+			Logger:  logger,
 		}
 	)
 
 	config := cors.DefaultConfig()
-	config.AddAllowHeaders("Authorization")
 	config.AllowAllOrigins = true
+
+	config.AddAllowHeaders("Authorization")
 	router.Use(cors.New(config))
 
 	router.POST("/email/send", httpService.SendSignInEmail)
@@ -53,6 +55,7 @@ func main() {
 		authed.GET("/competition/:id", httpService.GetCompetition)
 		authed.DELETE("/competition/:id", httpService.DeleteCompetition)
 		authed.POST("/competition/:id/lock", httpService.LockCompetition)
+		authed.POST("/competition/:id/result", httpService.SetCompetitionResult)
 
 		authed.GET("/competitor", httpService.GetCompetitor)
 		authed.POST("/competitor", httpService.AddCompetitor)

@@ -52,7 +52,6 @@ func (s *Service) GetCompetitionMetrics(ctx context.Context, id int) (*pkg.Compe
 			if int(v) == competition.MinScore {
 				bottomScores++
 			}
-
 		}
 
 		// Update all global values to calculate group metrics.
