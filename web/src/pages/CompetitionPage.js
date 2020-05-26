@@ -9,6 +9,7 @@ import {
 import { Competition } from "../Competition";
 import { AddCompetitor, Competitor } from "../Competitor";
 import { Bet } from "../Bet";
+import Generic from "../Generic";
 import HttpService from "../HttpClient";
 
 export default function CompetitionPage(props) {
@@ -92,14 +93,31 @@ export default function CompetitionPage(props) {
   const DragHandle = sortableHandle(() => <div className="DragHandle" />);
 
   const SortableItem = sortableElement(({ value }) => (
-    <li className="SortableItem">
-      <DragHandle />
-      {value.name} - {value.description}
-    </li>
+    <div className="SortableItem">
+      <div style={{ float: "left" }}>
+        <DragHandle />
+      </div>
+      <div style={{ width: "100%" }}>
+        <div style={{ float: "left" }}>
+          <p>{value.name}</p>
+          <p>
+            <small>{value.description}</small>
+          </p>
+          <Generic.FormGroupInput id="name" name="Name" />
+        </div>
+        <div style={{ float: "right", display: "flex", height: "100%" }}>
+          <img
+            alt=""
+            src={`flags/png/${value.image}`}
+            style={{ width: 42, height: 42 }}
+          />
+        </div>
+      </div>
+    </div>
   ));
 
   const SortableContainer = sortableContainer(({ children }) => {
-    return <ul className="SortableList">{children}</ul>;
+    return <div className="SortableList">{children}</div>;
   });
 
   return state.loading ? (
@@ -139,9 +157,14 @@ export default function CompetitionPage(props) {
         </div>
       ))}
       */}
-      <SortableContainer onSortEnd={onSortEnd} useDragHandle>
+      <SortableContainer
+        onSortEnd={onSortEnd}
+        useDragHandle
+        getContainer={() => document.getElementById("root")}
+      >
         {state.competition.competitors.map((value, index) => (
           <SortableItem
+            getContainer={() => document.getElementById("container")}
             helperClass="SortableHelper"
             key={`item-${value.id}`}
             index={index}
